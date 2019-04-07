@@ -192,14 +192,14 @@ class CAEGan(AbstractNet):
             # save the original images
             ten_original = ten
             # encode
-            ten = self.encoder(ten)
+            ten_encoder = self.encoder(ten)
             # decode the tensor
-            ten = self.decoder(ten)
+            ten = self.decoder(ten_encoder)
             # discriminator for reconstruction
             ten_layer = self.discriminator(ten, ten_original, "REC")
             # decoder for samples
             ten_class = self.discriminator(ten_original, ten, "GAN")
-            return ten, ten_class, ten_layer
+            return ten, ten_class, ten_layer, ten_encoder
         else:
             if decode:
                 encoding = self.encoder(ten)
