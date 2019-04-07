@@ -11,7 +11,7 @@ class AbstractNet(nn.Module):
         self._today = datetime.datetime.now().date()
         super(AbstractNet, self).__init__()
 
-    def save_model(self, epoch=None, iteration=None, filename=None, loss=None, optimizers=None, use_datetime=True, **kwargs):
+    def save_model(self, epoch=0, iteration=0, filename=None, loss=None, optimizers=None, use_datetime=True, **kwargs):
         if optimizers is not None:
             if not isinstance(optimizers, list):
                 optimizers = [optimizers]
@@ -28,9 +28,10 @@ class AbstractNet(nn.Module):
         filename += '.pth'
         if use_datetime:
             today = str(self._today)
-            path = join(self.checkpoint+'/', today+'/', filename)
+            path = join(self.checkpoint+'/', today+'/')
 
         create_folder(path)
+        path = join(path, filename)
         save_dict = dict(model_state_dict=self.state_dict(), epoch=epoch)
         for i, optim in enumerate(optimizers):
             save_dict['optim_%i'%i]=optim.state_dict()
