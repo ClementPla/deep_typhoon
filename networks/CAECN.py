@@ -211,7 +211,7 @@ class CAEGan(AbstractNet):
 
     @staticmethod
     def loss(ten_original, ten_predict, layer_original, layer_predicted, labels_original,
-             labels_sampled, h):
+             labels_sampled, h, W):
         """
 
         :param ten_original: original images
@@ -221,8 +221,6 @@ class CAEGan(AbstractNet):
         :param labels_original: labels for original (output of the discriminator)
         :param labels_predicted: labels for reconstructed (output of the discriminator)
         :param labels_sampled: labels for sampled from gaussian (0,1) (output of the discriminator)
-        :param mus: tensor of means
-        :param variances: tensor of diagonals of log_variances
         :return:
         """
 
