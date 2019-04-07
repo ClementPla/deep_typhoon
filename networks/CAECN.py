@@ -187,7 +187,7 @@ class CAEGan(AbstractNet):
                 if hasattr(m, "bias") and m.bias is not None and m.bias.requires_grad:
                     nn.init.constant_(m.bias, 0.0)
 
-    def forward(self, ten, decode=False):
+    def forward(self, ten, only_decode=False):
         if self.training:
             # save the original images
             ten_original = ten
@@ -201,7 +201,7 @@ class CAEGan(AbstractNet):
             ten_class = self.discriminator(ten_original, ten, "GAN")
             return ten, ten_class, ten_layer, ten_encoder
         else:
-            if decode:
+            if not only_decode:
                 encoding = self.encoder(ten)
                 reconstruct = self.decoder(encoding)
                 return reconstruct, encoding
