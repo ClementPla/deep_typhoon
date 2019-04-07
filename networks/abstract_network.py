@@ -1,0 +1,41 @@
+from torch import nn
+import torch
+from utils.io import *
+from os.path import join
+import datetime
+
+class AbstractNet(nn.Module):
+    def __init__(self, checkpoint, gpu=0):
+        self.gpu = gpu
+        self.checkpoint = checkpoint
+        self._today = datetime.datetime.now().date()
+        super(AbstractNet, self).__init__()
+
+    def save_model(self, epoch=None, iteration=None, filename=None, loss=None, optimizers=None, use_datetime=True, **kwargs):
+        if optimizers is not None:
+            if not isinstance(optimizers, list):
+                optimizers = [optimizers]
+        else:
+            optimizers = []
+
+        if filename is None:
+            filename = "epoch_%i_iter_%i" %(epoch, iteration)
+            if loss is not None:
+                filename += "loss_%f" %loss
+        for k in kwargs:
+            filename += k+'_%f'%kwargs[k]
+
+        filename += '.pth'
+        if use_datetime:
+            today = str(self._today)
+            path = join(self.checkpoint+'/', today+'/', filename)
+
+        create_folder(path)
+        save_dict = dict(model_state_dict=self.state_dict(), epoch=epoch)
+        for i, optim in enumerate(optimizers):
+            save_dict['optim_%i'%i]=optim.state_dict()
+
+        torch.save(save_dict, path)
+
+
+
