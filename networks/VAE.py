@@ -12,21 +12,21 @@ class Encoder(nn.Module):
         self.size = channel_in
         layers_list = []
         # the first time 3->64, for every other double the channel size
-        for i in range(6):
-            if i == 0:
-                layers_list.append(EncoderBlock(channel_in=self.size, channel_out=32))
-                self.size = 32
-            elif i == 4:
-                layers_list.append(EncoderBlock(channel_in=self.size, channel_out=self.size))
-            else:
-                layers_list.append(EncoderBlock(channel_in=self.size, channel_out=self.size * 2))
-                self.size *= 2
+        layers_list += [nn.Conv2d(in_channels=channel_in, out_channels=32, kernel_size=5, padding=2, stride=1,
+                                  bias=False), nn.BatchNorm2d(num_features=32, momentum=0.9)]
+        for i in range(4):
+            layers_list.append(EncoderBlock(channel_in=32 * (2 ** i), channel_out=32 * 2 ** (i + 1)))
 
-        # final shape Bx256x8x8
+        self.size = 32 * 2 ** (i + 1)
+
+        layers_list.append(EncoderBlock(channel_in=self.size, channel_out=self.size))
+        layers_list.append(EncoderBlock(channel_in=self.size, channel_out=self.size))
+
         self.conv = nn.Sequential(*layers_list)
         self.fc = nn.Sequential(nn.Linear(in_features=8 * 8 * self.size, out_features=1024, bias=False),
                                 nn.BatchNorm1d(num_features=1024, momentum=0.9),
                                 nn.ReLU(True))
+
         # two linear to get the mu vector and the diagonal of the log_variance
         self.l_mu = nn.Linear(in_features=1024, out_features=z_size)
         self.l_var = nn.Linear(in_features=1024, out_features=z_size)
@@ -50,15 +50,14 @@ class Decoder(nn.Module):
         self.fc = nn.Sequential(nn.Linear(in_features=z_size, out_features=8 * 8 * size, bias=False),
                                 nn.BatchNorm1d(num_features=8 * 8 * size, momentum=0.9),
                                 nn.ReLU(True))
-        self.size = size
+
         layers_list = []
-        layers_list.append(DecoderBlock(channel_in=self.size, channel_out=self.size // 2))
-        layers_list.append(DecoderBlock(channel_in=self.size // 2, channel_out=self.size // 4))
-        layers_list.append(DecoderBlock(channel_in=self.size // 4, channel_out=self.size // 8))
-        layers_list.append(DecoderBlock(channel_in=self.size // 8, channel_out=self.size // 16))
-        layers_list.append(DecoderBlock(channel_in=self.size // 16, channel_out=self.size // 16))
-        layers_list.append(DecoderBlock(channel_in=self.size // 16, channel_out=self.size // 32))
-        self.size = self.size // 32
+        layers_list.append(DecoderBlock(channel_in=size, channel_out=size))
+        layers_list.append(DecoderBlock(channel_in=size, channel_out=size))
+        for i in range(4):
+            layers_list.append(DecoderBlock(channel_in=int(size * 2 ** (-i)), channel_out=int(size * 2 ** (-i - 1))))
+
+        self.size = int(size * 2 ** (-i - 1))
         # final conv to get 1 channels and tanh layer
         layers_list.append(nn.Sequential(
             nn.Conv2d(in_channels=self.size, out_channels=1, kernel_size=5, stride=1, padding=2),

@@ -46,9 +46,9 @@ class Decoder(nn.Module):
         layers_list.append(DecoderBlock(channel_in=size, channel_out=size))
         layers_list.append(DecoderBlock(channel_in=size, channel_out=size))
         for i in range(4):
-            layers_list.append(DecoderBlock(channel_in=int(size*2**(-i)), channel_out=int(size*2**(-i-1))))
+            layers_list.append(DecoderBlock(channel_in=int(size * 2 ** (-i)), channel_out=int(size * 2 ** (-i - 1))))
 
-        self.size = int(size*2**(-i-1))
+        self.size = int(size * 2 ** (-i - 1))
         # final conv to get 1 channels and tanh layer
         layers_list.append(nn.Sequential(
             nn.Conv2d(in_channels=self.size, out_channels=1, kernel_size=5, stride=1, padding=2),
@@ -118,5 +118,4 @@ class AE(AbstractNet):
         # reconstruction error, not used for the loss but useful to evaluate quality
         L2Loss = nn.MSELoss()
         nle = L2Loss(ten_original, ten_predict)
-
         return nle
