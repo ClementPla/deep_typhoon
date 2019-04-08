@@ -1,7 +1,6 @@
 import torch
 import torch.nn.functional as F
 import torch.nn as nn
-from torch.autograd import Variable
 import numpy
 from .abstract_network import AbstractNet
 
@@ -162,9 +161,9 @@ class Discriminator(nn.Module):
             return torch.sigmoid(ten)
 
 
-class CAEGan(AbstractNet):
+class AEGan(AbstractNet):
     def __init__(self, channel_in=1, z_size=128, recon_level=3, gpu=1, checkpoint=''):
-        super(CAEGan, self).__init__(gpu=gpu, checkpoint=checkpoint)
+        super(AEGan, self).__init__(gpu=gpu, checkpoint=checkpoint)
         # latent space size
         self.z_size = z_size
         self.encoder = Encoder(z_size=self.z_size, channel_in=channel_in)
@@ -211,7 +210,7 @@ class CAEGan(AbstractNet):
 
     @staticmethod
     def loss(ten_original, ten_predict, layer_original, layer_predicted, labels_original,
-             labels_sampled, h, W):
+             labels_sampled):
         """
 
         :param ten_original: original images
@@ -239,12 +238,5 @@ class CAEGan(AbstractNet):
         bce_gen_original = -torch.log(1 - labels_original + 1e-3)
         bce_gen_sampled = -torch.log(labels_sampled + 1e-3)
 
-        dh = h * (1 - h)  # Hadamard product produces size N_batch x N_hidden
-        # Sum through the input dimension to improve efficiency, as suggested in #1
-        w_sum = torch.sum(Variable(W) ** 2, dim=1)
-        # unsqueeze to avoid issues with torch.mv
-        w_sum = w_sum.unsqueeze(1)  # shape N_hidden x 1
 
-        contractive_loss = torch.sum(torch.mm(dh ** 2, w_sum), 0)
-
-        return nle, contractive_loss, mse, bce_dis_original, bce_dis_sampled, bce_gen_original, bce_gen_sampled
+        return nle, mse, bce_dis_original, bce_dis_sampled, bce_gen_original, bce_gen_sampled
