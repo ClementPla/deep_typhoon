@@ -129,8 +129,8 @@ class Discriminator(nn.Module):
 
 
 class VaeGan(AbstractNet):
-    def __init__(self, z_size=128, recon_level=3, gpu=1):
-        super(VaeGan, self).__init__()
+    def __init__(self, z_size=128, recon_level=3, gpu=1, checkpoint=''):
+        super(VaeGan, self).__init__(checkpoint=checkpoint, gpu=gpu)
         # latent space size
         self.z_size = z_size
         self.encoder = Encoder(z_size=self.z_size)
