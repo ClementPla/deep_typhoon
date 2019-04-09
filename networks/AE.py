@@ -2,7 +2,8 @@ import torch.nn as nn
 import numpy
 from .abstract_network import AbstractNet
 from .basis_block import *
-from utils.tensors import remove_nan
+from utils.tensors import *
+
 
 class Encoder(nn.Module):
     def __init__(self, channel_in=1, z_size=128):
@@ -11,11 +12,11 @@ class Encoder(nn.Module):
         layers_list = []
         # the first time 3->64, for every other double the channel size
         layers_list += [nn.Conv2d(in_channels=channel_in, out_channels=32, kernel_size=5, padding=2, stride=1,
-                              bias=False), nn.BatchNorm2d(num_features=32, momentum=0.9)]
+                                  bias=False), nn.BatchNorm2d(num_features=32, momentum=0.9)]
         for i in range(4):
-            layers_list.append(EncoderBlock(channel_in=32*(2**i), channel_out=32*2**(i+1)))
+            layers_list.append(EncoderBlock(channel_in=32 * (2 ** i), channel_out=32 * 2 ** (i + 1)))
 
-        self.size = 32*2**(i+1)
+        self.size = 32 * 2 ** (i + 1)
 
         layers_list.append(EncoderBlock(channel_in=self.size, channel_out=self.size))
         layers_list.append(EncoderBlock(channel_in=self.size, channel_out=self.size))
@@ -34,39 +35,9 @@ class Encoder(nn.Module):
         return ten
 
 
-class Decoder(nn.Module):
-    def __init__(self, z_size, size):
-        super(Decoder, self).__init__()
-        # start from B*z_size
-        self.fc = nn.Sequential(nn.Linear(in_features=z_size, out_features=8 * 8 * size, bias=False),
-                                nn.BatchNorm1d(num_features=8 * 8 * size, momentum=0.9),
-                                nn.ReLU(True))
-
-        layers_list = []
-        layers_list.append(DecoderBlock(channel_in=size, channel_out=size))
-        layers_list.append(DecoderBlock(channel_in=size, channel_out=size))
-        for i in range(4):
-            layers_list.append(DecoderBlock(channel_in=int(size * 2 ** (-i)), channel_out=int(size * 2 ** (-i - 1))))
-
-        self.size = int(size * 2 ** (-i - 1))
-        # final conv to get 1 channels and tanh layer
-        layers_list.append(nn.Sequential(
-            nn.Conv2d(in_channels=self.size, out_channels=1, kernel_size=5, stride=1, padding=2),
-            nn.Tanh()
-        ))
-
-        self.conv = nn.Sequential(*layers_list)
-
-    def forward(self, ten):
-        ten = self.fc(ten)
-        ten = ten.view(len(ten), -1, 8, 8)
-        ten = self.conv(ten)
-        return ten
-
-
 class AE(AbstractNet):
-    def __init__(self, channel_in=1, z_size=128, gpu=1, checkpoint=''):
-        super(AE, self).__init__(gpu=gpu, checkpoint=checkpoint)
+    def __init__(self, channel_in=1, z_size=128, gpu=1, checkpoint='', upsampling='transposed'):
+        super(AE, self).__init__(gpu=gpu, checkpoint=checkpoint, upsampling=upsampling)
         # latent space size
         self.z_size = z_size
         self.encoder = Encoder(z_size=self.z_size, channel_in=channel_in)
@@ -105,7 +76,6 @@ class AE(AbstractNet):
                 return reconstruct, encoding
             else:
                 return self.decoder(ten)
-
 
     @staticmethod
     def loss(ten_original, ten_predict):
