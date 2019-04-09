@@ -117,6 +117,5 @@ class AE(AbstractNet):
 
         # reconstruction error, not used for the loss but useful to evaluate quality
         L2Loss = nn.MSELoss()
-        remove_nan(ten_original, ten_predict)
         nle = L2Loss(ten_original, ten_predict)
         return nle

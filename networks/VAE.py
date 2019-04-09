@@ -226,7 +226,6 @@ class VaeGan(AbstractNet):
 
         # reconstruction error, not used for the loss but useful to evaluate quality
         L2Loss = nn.MSELoss()
-        remove_nan(ten_original, ten_predict, labels_original, layer_predicted, mus, variances)
         nle = L2Loss(ten_original, ten_predict)
         # kl-divergence
         kl = -0.5 * torch.sum(-variances.exp() - torch.pow(mus, 2) + variances + 1, 1)
