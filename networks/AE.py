@@ -2,7 +2,7 @@ import torch.nn as nn
 import numpy
 from .abstract_network import AbstractNet
 from .basis_block import *
-
+from utils.tensors import remove_nan
 
 class Encoder(nn.Module):
     def __init__(self, channel_in=1, z_size=128):
@@ -117,5 +117,6 @@ class AE(AbstractNet):
 
         # reconstruction error, not used for the loss but useful to evaluate quality
         L2Loss = nn.MSELoss()
+        remove_nan(ten_original, ten_predict)
         nle = L2Loss(ten_original, ten_predict)
         return nle

@@ -4,7 +4,7 @@ from torch.autograd import Variable
 import numpy
 from .abstract_network import AbstractNet
 from .basis_block import *
-
+from utils.tensors import *
 
 class Encoder(nn.Module):
     def __init__(self, channel_in=1, z_size=128):
@@ -212,7 +212,6 @@ class VaeGan(AbstractNet):
     def loss(ten_original, ten_predict, layer_original, layer_predicted, labels_original,
              labels_sampled, mus, variances):
         """
-
         :param ten_original: original images
         :param ten_predict:  predicted images (output of the decoder)
         :param layer_original:  intermediate layer for original (intermediate output of the discriminator)
@@ -227,6 +226,7 @@ class VaeGan(AbstractNet):
 
         # reconstruction error, not used for the loss but useful to evaluate quality
         L2Loss = nn.MSELoss()
+        remove_nan(ten_original, ten_predict, labels_original, layer_predicted, mus, variances)
         nle = L2Loss(ten_original, ten_predict)
         # kl-divergence
         kl = -0.5 * torch.sum(-variances.exp() - torch.pow(mus, 2) + variances + 1, 1)
@@ -240,18 +240,5 @@ class VaeGan(AbstractNet):
 
         bce_gen_original = -torch.log(1 - labels_original + 1e-3)
         bce_gen_sampled = -torch.log(labels_sampled + 1e-3)
-        '''
 
-
-        bce_gen_predicted = nn.BCEWithLogitsLoss(size_average=False)(labels_predicted,
-                                         Variable(torch.ones_like(labels_predicted.data).cuda(), requires_grad=False))
-        bce_gen_sampled = nn.BCEWithLogitsLoss(size_average=False)(labels_sampled,
-                                       Variable(torch.ones_like(labels_sampled.data).cuda(), requires_grad=False))
-        bce_dis_original = nn.BCEWithLogitsLoss(size_average=False)(labels_original,
-                                        Variable(torch.ones_like(labels_original.data).cuda(), requires_grad=False))
-        bce_dis_predicted = nn.BCEWithLogitsLoss(size_average=False)(labels_predicted,
-                                         Variable(torch.zeros_like(labels_predicted.data).cuda(), requires_grad=False))
-        bce_dis_sampled = nn.BCEWithLogitsLoss(size_average=False)(labels_sampled,
-                                       Variable(torch.zeros_like(labels_sampled.data).cuda(), requires_grad=False))
-        '''
         return nle, kl, mse, bce_dis_original, bce_dis_sampled, bce_gen_original, bce_gen_sampled

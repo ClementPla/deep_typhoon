@@ -3,6 +3,7 @@ import torch.nn as nn
 import numpy
 from .abstract_network import AbstractNet
 from .basis_block import *
+from utils.tensors import *
 
 
 class Encoder(nn.Module):
@@ -182,6 +183,8 @@ class AEGan(AbstractNet):
 
         # reconstruction error, not used for the loss but useful to evaluate quality
         L2Loss = nn.MSELoss()
+        remove_nan(ten_original, ten_predict, labels_original, layer_predicted)
+
         nle = L2Loss(ten_original, ten_predict)
         # kl-divergence
         # mse between intermediate layers
