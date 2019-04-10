@@ -28,7 +28,7 @@ def deep_interpolation(arr1, arr2, nb_frames, model, optimize_z=True, spherical=
         z2 = z2 / z2_norm
         z_mean_norm = (z1_norm+z2_norm)/2
 
-    time = np.linspace(0, 1, nb_frames+1)[1:]
+    time = np.linspace(0, 1, nb_frames+1, endpoint=False)[1:]
     for t in time:
         if spherical:
             z = z1 * torch.sin((1 - t) * theta) / torch.sin(theta) + z2 * torch.sin(t * theta) / torch.sin(theta)
@@ -47,7 +47,7 @@ def polar_interpolation(arr1, arr2, nb_frames, return_polar=False):
     value = np.sqrt(((arr1.shape[0] / 2.0) ** 2.0) + ((arr1.shape[1] / 2.0) ** 2.0))
     polar_image1 = cv2.linearPolar(arr1, (arr1.shape[0] / 2, arr1.shape[1] / 2), value, cv2.WARP_FILL_OUTLIERS)
     polar_image2 = cv2.linearPolar(arr2, (arr1.shape[0] / 2, arr1.shape[1] / 2), value, cv2.WARP_FILL_OUTLIERS)
-    time = np.linspace(0, 1, nb_frames+1)[1:]
+    time = np.linspace(0, 1, nb_frames+1, endpoint=False)[1:]
     interpolated_frames = []
     interpolated_polar = []
     for t in time:
@@ -67,7 +67,7 @@ def polar_interpolation(arr1, arr2, nb_frames, return_polar=False):
 
 def linear_interpolation(arr1, arr2, nb_frames):
     interpolated_frames = []
-    time = np.linspace(0, 1, nb_frames+1)[1:]
+    time = np.linspace(0, 1, nb_frames+1, endpoint=False)[1:]
     for t in time:
         arr = arr1*(1-t)+arr2*t
         interpolated_frames.append(arr)
