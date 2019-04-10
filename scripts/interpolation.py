@@ -34,7 +34,12 @@ def deep_interpolation(arr1, arr2, nb_frames, model, optimize_z=True, spherical=
     return interpolated_frames
 
 
-
+def linear_interpolation(arr1, arr2, nb_frames):
+    interpolated_frames = []
+    for f in range(nb_frames):
+        arr = arr1*(1-f)+arr2*f
+        interpolated_frames.append(arr)
+    return interpolated_frames
 
 
 
