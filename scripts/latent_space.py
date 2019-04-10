@@ -25,8 +25,7 @@ def reverse_z(netG, goal, z_size, cuda, clip='disabled', lr=0.001, niter=500, in
     z_approx.requires_grad = True
 
     # optimizer
-    optimizer_approx = optim.Adam([z_approx], lr=lr,
-                                  betas=(0.5, 0.999))
+    optimizer_approx = optim.Adam([z_approx], lr=lr)
 
     # train
     for i in range(niter):
