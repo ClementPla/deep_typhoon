@@ -21,10 +21,9 @@ def animate(sequences, interval=100, blit=True, fig_size=(14,10), get_fig=False)
                 fig, ax = plt.subplots(nb_row, nb_col)
 
             for j in range(len(el)):
-                col = int(j %2 == 0)
+                col = int(j % 2 != 0)
                 row = j//nb_col
-                print(col, row)
-                seq.append(ax[col, row].imshow(np.squeeze(el[i]), cmap='gray'))
+                seq.append(ax[col, row].imshow(np.squeeze(el[j]), cmap='gray'))
 
             animate.append(seq)
 
