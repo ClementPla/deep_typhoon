@@ -1,7 +1,7 @@
 from utils.tensors import *
 from scripts.latent_space import *
 import torch
-
+import cv2
 
 def deep_interpolation(arr1, arr2, nb_frames, model, optimize_z=True, spherical=True, **kwargs):
     model.eval()
@@ -42,12 +42,27 @@ def deep_interpolation(arr1, arr2, nb_frames, model, optimize_z=True, spherical=
 
     return interpolated_frames
 
+def polar_interpolation(arr1, arr2, nb_frames):
+    value = np.sqrt(((arr1.shape[0] / 2.0) ** 2.0) + ((arr1.shape[1] / 2.0) ** 2.0))
+    polar_image1 = cv2.linearPolar(arr1, (arr1.shape[0] / 2, arr1.shape[1] / 2), value, cv2.WARP_FILL_OUTLIERS)
+    polar_image2 = cv2.linearPolar(arr2, (arr1.shape[0] / 2, arr1.shape[1] / 2), value, cv2.WARP_FILL_OUTLIERS)
+    time = np.linspace(0, 1, nb_frames+1)[1:]
+    interpolated_frames = []
+
+    for t in time:
+        polar_img = polar_image1*(1-t)+polar_image2*t
+        cartesian_image = cv2.linearPolar(polar_img, (arr1.shape[0] / 2, arr1.shape[1] / 2), value,
+                                          cv2.WARP_INVERSE_MAP)
+
+        interpolated_frames(polar_img)
+    return interpolated_frames
+
 
 def linear_interpolation(arr1, arr2, nb_frames):
     interpolated_frames = []
-    for f in range(nb_frames):
-        f = f/nb_frames
-        arr = arr1*(1-f)+arr2*f
+    time = np.linspace(0, 1, nb_frames+1)[1:]
+    for t in time:
+        arr = arr1*(1-t)+arr2*t
         interpolated_frames.append(arr)
     return interpolated_frames
 
