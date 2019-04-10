@@ -22,6 +22,7 @@ def deep_interpolation(arr1, arr2, nb_frames, model, optimize_z=True, spherical=
         theta = get_angle(z1, z2)
 
     for f in range(nb_frames):
+        f = f / nb_frames
         if spherical:
             z = z1 * torch.sin((1 - f) * theta) / torch.sin(theta) + z2 * torch.sin(f * theta) / torch.sin(theta)
         else:
@@ -37,6 +38,7 @@ def deep_interpolation(arr1, arr2, nb_frames, model, optimize_z=True, spherical=
 def linear_interpolation(arr1, arr2, nb_frames):
     interpolated_frames = []
     for f in range(nb_frames):
+        f = f/nb_frames
         arr = arr1*(1-f)+arr2*f
         interpolated_frames.append(arr)
     return interpolated_frames
