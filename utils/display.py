@@ -8,7 +8,7 @@ import math
 def animate(sequences, interval=100, blit=True, fig_size=(14,10), get_fig=False):
     if isinstance(sequences, list) or isinstance(sequences, np.ndarray):
         fig, ax = plt.subplots(1, 1)
-        animate = [[ax.imshow(np.squeeze(_), cmap='gray') for _ in sequences]]
+        animate = [[ax.imshow(np.squeeze(_), cmap='gray')] for _ in sequences]
 
     elif isinstance(sequences, zip):
         animate = []
