@@ -23,6 +23,7 @@ def animate(sequences, interval=100, blit=True, fig_size=(14,10), get_fig=False)
             for j in range(len(el)):
                 col = int(j %2 == 0)
                 row = j//nb_col
+                print(col, row)
                 seq.append(ax[col, row].imshow(np.squeeze(el[i]), cmap='gray'))
 
             animate.append(seq)
