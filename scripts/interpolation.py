@@ -29,7 +29,7 @@ def deep_interpolation(arr1, arr2, nb_frames, model, optimize_z=True, spherical=
         z_mean_norm = (z1_norm+z2_norm)/2
 
     time = np.linspace(0, 1, nb_frames+1)[1:]
-    for t in range(time):
+    for t in time:
         if spherical:
             z = z1 * torch.sin((1 - t) * theta) / torch.sin(theta) + z2 * torch.sin(t * theta) / torch.sin(theta)
             z *= z_mean_norm
