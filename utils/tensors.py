@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 
+
 def remove_nan(*tensor):
     for tens in tensor:
         tens[tens != tens] = 0
@@ -24,6 +25,13 @@ def convert_numpy_to_tensor(arr, cuda=None):
     else:
         return torch.from_numpy(arr).cuda(cuda)
 
+
 def convert_tensor_to_numpy(tensor):
     with torch.no_grad():
         return np.squeeze(tensor.cpu().numpy())
+
+def apply_model(arr, model, cuda=None):
+    if cuda is None:
+        cuda = model.gpu
+
+    return convert_tensor_to_numpy(model(convert_numpy_to_tensor(arr, cuda)))

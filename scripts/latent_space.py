@@ -8,6 +8,7 @@ import torch
 def reverse_z(netG, goal, z_size, cuda, clip='disabled', lr=0.001, niter=500, initial_z=None, **kwargs):
     # sanity check
     assert clip in ['disabled', 'standard', 'stochastic']
+    print("Optimizing z with %i iterations"%niter)
 
     # loss metrics
     mse_loss = nn.MSELoss()
