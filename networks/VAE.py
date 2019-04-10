@@ -6,6 +6,7 @@ from .abstract_network import AbstractNet
 from .basis_block import *
 from utils.tensors import *
 
+
 class Encoder(nn.Module):
     def __init__(self, channel_in=1, z_size=128):
         super(Encoder, self).__init__()
@@ -177,6 +178,19 @@ class VaeGan(AbstractNet):
                 # decode the tensor
                 ten = self.decoder(ten)
             return ten
+
+    def encode(self, ten):
+        mus, log_variances = self.encoder(ten)
+        # we need the true variances, not the log one
+        variances = torch.exp(log_variances * 0.5)
+        # sample from a gaussian
+        if self.gpu is not None:
+            ten_from_normal = Variable(torch.randn(len(ten), self.z_size).cuda(self.gpu), requires_grad=True)
+        else:
+            ten_from_normal = Variable(torch.randn(len(ten), self.z_size), requires_grad=True)
+            # shift and scale using the means and variances
+        ten = ten_from_normal * variances + mus
+        return ten
 
     @staticmethod
     def loss(ten_original, ten_predict, layer_original, layer_predicted, labels_original,
