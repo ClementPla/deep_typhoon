@@ -55,6 +55,8 @@ def polar_interpolation(arr1, arr2, nb_frames, return_polar=False):
         cartesian_image = cv2.linearPolar(polar_img, (arr1.shape[0] / 2, arr1.shape[1] / 2), value,
                                           cv2.WARP_INVERSE_MAP)
 
+        cartesian_image = np.clip(cartesian_image, arr1.min(), arr2.max())
+
         interpolated_frames.append(cartesian_image)
         interpolated_polar.append(polar_img)
     if return_polar:
