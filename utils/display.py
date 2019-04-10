@@ -42,7 +42,7 @@ def animate(sequences, interval=100, blit=True, fig_size=(14,10), get_fig=False)
 
 def html_animation(sequences, interval=100, blit=True, fig_size=(14,10)):
 
-    anim = animation(sequences, interval, blit, fig_size)
+    anim = animate(sequences, interval, blit, fig_size)
     return HTML(anim.to_html5_video())
 
 
