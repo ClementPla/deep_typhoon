@@ -1,6 +1,7 @@
 from torch import nn
 import torch
 from utils.io import *
+from utils.tensors import *
 from os.path import join
 import datetime
 
@@ -39,3 +40,13 @@ class AbstractNet(nn.Module):
             save_dict['optim_%i' % i] = optim.state_dict()
 
         torch.save(save_dict, path)
+
+
+    def load(self, path, ignore_nan=False):
+        device = torch.device('cpu')
+        state_dict = torch.load(path, map_location=device)['model_state_dict']
+        if not ignore_nan:
+            check_nan(state_dict)
+        self.load_state_dict(state_dict)
+        self.cuda(self.gpu)
+
