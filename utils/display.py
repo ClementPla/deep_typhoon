@@ -46,7 +46,7 @@ def html_animation(sequences, interval=100, blit=True, fig_size=(14,10)):
     return HTML(anim.to_html5_video())
 
 
-def plot_results(batch):
+def plot_results(batch, fig_size=(14,10)):
     if batch.shape[0]==1 or batch.ndim in [2,3]:
         fig, ax = plt.subplots(1, 1)
         ax.imshow(np.squeeze(batch), cmap='gray')
@@ -61,6 +61,9 @@ def plot_results(batch):
             col = int(j % 2 != 0)
             row = j//nb_col
             ax[row, col].imshow(np.squeeze(batch[j]), cmap='gray')
+
+    fig.set_size_inches(*fig_size)
+
 
     fig.show()
 
