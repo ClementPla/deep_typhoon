@@ -13,7 +13,7 @@ def check_nan(state_dict):
             raise ValueError("Corrupted file")
 
 
-def convert_numpy_to_tensor(arr, cuda=None, vector=False, expect_dims=3):
+def convert_numpy_to_tensor(arr, cuda=None, vector=False, expect_dims=None):
     if not vector:
         if arr.ndim == 2:
             arr = np.expand_dims(arr, 0)
@@ -23,7 +23,6 @@ def convert_numpy_to_tensor(arr, cuda=None, vector=False, expect_dims=3):
         if arr.ndim == 1:
             arr = np.expand_dims(arr, 0)
 
-    print(arr.shape)
     import torch
     if cuda is None:
         return torch.from_numpy(arr)
