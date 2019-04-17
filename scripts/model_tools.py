@@ -3,13 +3,17 @@ import numpy as np
 from scripts.latent_space import reverse_z
 
 
-def forward(model, input_imgs, b=8, gpu=0, only_decode=True):
+def forward(model, input_imgs, b=8, gpu=0):
     gen = batch_gen(input_imgs, batch_size=b)
     output = []
     model.eval()
     for arr in gen:
-        tens_out = model.encoder(convert_numpy_to_tensor(arr, gpu))
-        output.append(convert_tensor_to_numpy(model.decoder(tens_out)))
+        print(arr.shape)
+        tensor = convert_numpy_to_tensor(arr, gpu)
+        print(tensor.size())
+        reconstruct = mode(tensor, only_decode=True)
+        reconstruct_array = convert_tensor_to_numpy(reconstruct_array)
+        output.append(reconstruct_array)
     return np.asarray(output)
 
 
