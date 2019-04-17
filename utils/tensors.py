@@ -13,11 +13,11 @@ def check_nan(state_dict):
             raise ValueError("Corrupted file")
 
 
-def convert_numpy_to_tensor(arr, cuda=None, vector=False):
+def convert_numpy_to_tensor(arr, cuda=None, vector=False, expect_dims=3):
     if not vector:
         if arr.ndim == 2:
             arr = np.expand_dims(arr, 0)
-        if arr.ndim == 3:
+        if arr.ndim == 3 and expect_dims != 3:
             arr = np.expand_dims(arr, 0)
     if vector:
         if arr.ndim == 1:

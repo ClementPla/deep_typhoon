@@ -3,8 +3,8 @@ import numpy as np
 from scripts.latent_space import reverse_z
 
 
-def forward(model, arr, b=8, gpu=0, only_decode=True):
-    gen = batch_gen(arr, batch_size=b)
+def forward(model, input_imgs, b=8, gpu=0, only_decode=True):
+    gen = batch_gen(input_imgs, batch_size=b)
     output = []
     model.eval()
     for arr in gen:
