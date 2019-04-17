@@ -3,11 +3,12 @@ import numpy as np
 from scripts.latent_space import reverse_z
 
 
-def forward(model, arr, b=8, gpu=0):
+def forward(model, arr, b=8, gpu=0, only_decode=True):
     gen = batch_gen(arr, b)
     output = []
+    model.eval()
     for arr in gen:
-        tens_out = model(convert_numpy_to_tensor(arr, gpu))
+        tens_out = model(convert_numpy_to_tensor(arr, gpu), only_decode=only_decode)
         output.append(convert_tensor_to_numpy(tens_out))
     return np.asarray(output)
 
