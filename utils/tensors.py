@@ -23,6 +23,7 @@ def convert_numpy_to_tensor(arr, cuda=None, vector=False):
         if arr.ndim == 1:
             arr = np.expand_dims(arr, 0)
 
+    print(arr.shape)
     import torch
     if cuda is None:
         return torch.from_numpy(arr)
