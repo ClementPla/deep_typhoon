@@ -12,7 +12,7 @@ def forward(model, input_imgs, b=8, gpu=0, optimize_z=False, **kwargs):
         # reconstruct = model(tensor, only_decode=True)
         z = model.encoder(tensor)
         if optimize_z:
-            z = reverse_z(model.decoder, tensor, cuda=gpu, z_size=model.z_size, **kwargs)
+            z = reverse_z(model.decoder, tensor, cuda=gpu, z_size=model.z_size, initial_z=z, **kwargs)
         reconstruct = model.decoder(z)
         reconstruct_array = convert_tensor_to_numpy(reconstruct, squeeze=False)
         output.append(reconstruct_array)

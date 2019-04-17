@@ -13,7 +13,7 @@ def reverse_z(netG, goal, z_size, cuda, clip='disabled', lr=0.001, niter=500, in
     # loss metrics
     mse_loss = nn.MSELoss()
     if initial_z is None:
-        z_approx = torch.randn(1, z_size).cuda(cuda)
+        z_approx = torch.randn(goal.size()[0], z_size).cuda(cuda)
     else:
         z_approx = initial_z
 
