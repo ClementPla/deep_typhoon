@@ -4,7 +4,7 @@ from scripts.latent_space import reverse_z
 
 
 def forward(model, arr, b=8, gpu=0, only_decode=True):
-    gen = batch_gen(arr, b)
+    gen = batch_gen(arr, batch_size=b)
     output = []
     model.eval()
     for arr in gen:
