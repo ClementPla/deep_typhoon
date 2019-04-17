@@ -3,7 +3,7 @@ import numpy as np
 from scripts.latent_space import reverse_z
 
 
-def forward(model, input_imgs, b=8, gpu=0):
+def forward(model, input_imgs, b=8, gpu=0, optimize_z=False, **kwargs):
     gen = batch_gen(input_imgs, batch_size=b)
     output = []
     model.eval()
@@ -11,6 +11,8 @@ def forward(model, input_imgs, b=8, gpu=0):
         tensor = convert_numpy_to_tensor(arr, gpu)
         # reconstruct = model(tensor, only_decode=True)
         z = model.encoder(tensor)
+        if optimize_z:
+            z = reverse_z(model.decoder, tensor, cuda=gpu, z_size=model.z_size, **kwargs)
         reconstruct = model.decoder(z)
         reconstruct_array = convert_tensor_to_numpy(reconstruct, squeeze=False)
         output.append(reconstruct_array)
