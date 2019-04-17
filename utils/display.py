@@ -55,12 +55,12 @@ def plot_results(batch):
         nb_el = batch.shape[0]
         nb_col = 2
         nb_row = math.ceil(nb_el/nb_col)
-        fig, ax = plt.subplots(nb_col, nb_row)
+        fig, ax = plt.subplots(nb_row, nb_col)
 
         for j in range(nb_el):
             col = int(j % 2 != 0)
             row = j//nb_col
-            ax[col, row].imshow(np.squeeze(batch[j]), cmap='gray')
+            ax[row, col].imshow(np.squeeze(batch[j]), cmap='gray')
 
     fig.show()
 
