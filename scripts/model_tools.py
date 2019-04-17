@@ -13,7 +13,7 @@ def forward(model, input_imgs, b=8, gpu=0):
         z = model.encoder(tensor)
         reconstruct = model.decoder(z)
 
-        reconstruct_array = convert_tensor_to_numpy(reconstruct, squeeze=True)
+        reconstruct_array = convert_tensor_to_numpy(reconstruct, squeeze=False)
         output.append(reconstruct_array)
     return np.asarray(output)
 
