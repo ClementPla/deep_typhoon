@@ -30,10 +30,12 @@ def convert_numpy_to_tensor(arr, cuda=None, vector=False, expect_dims=None):
         return torch.from_numpy(arr).cuda(cuda)
 
 
-def convert_tensor_to_numpy(tensor):
+def convert_tensor_to_numpy(tensor, squeeze=True):
     with torch.no_grad():
-        return np.squeeze(tensor.cpu().numpy())
-
+        if squeeze:
+            return np.squeeze(tensor.cpu().numpy())
+        else:
+            return tensor.cpu().numpy()
 
 def apply_model(arr, model, cuda=None):
     if cuda is None:
