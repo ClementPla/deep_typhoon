@@ -8,8 +8,8 @@ def forward(model, input_imgs, b=8, gpu=0, only_decode=True):
     output = []
     model.eval()
     for arr in gen:
-        tens_out = model(convert_numpy_to_tensor(arr, gpu), only_decode=only_decode)
-        output.append(convert_tensor_to_numpy(tens_out))
+        tens_out = model.encoder(convert_numpy_to_tensor(arr, gpu), only_decode=only_decode)
+        output.append(convert_tensor_to_numpy(model.decoder(tens_out)))
     return np.asarray(output)
 
 
