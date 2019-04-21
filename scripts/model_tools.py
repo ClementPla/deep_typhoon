@@ -58,9 +58,9 @@ class MultiThreadingEncoder(Thread):
 
     def run(self):
         for sequence in self.dataset:
-            name = sequence['name']
+            name = str(sequence['name'][0])
             arr = sequence['data'][0]
-            z = encoding(self.model, arr, self.gpu, **self.options)
+            z = encoding(model=self.model, arr=arr, gpu=self.gpu, **self.options)
             np.save(path.join(self.folder, name+'.npy'), z)
 
 
