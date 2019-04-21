@@ -41,6 +41,8 @@ def encoding(model, arr, b=8, gpu=0, optimize_z=False, **kwargs):
         if optimize_z:
             tens_out = reverse_z(model.decoder, goal_tens, cuda=gpu,  z_size=z_size, **kwargs)
         output.append(convert_tensor_to_numpy(tens_out))
+
+    print(np.asarray(output).shape)
     return np.concatenate(output, 0)
 
 
