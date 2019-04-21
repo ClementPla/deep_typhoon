@@ -36,13 +36,16 @@ def encoding(model, arr, b=8, gpu=0, optimize_z=False, **kwargs):
     output = []
     model.eval()
     for arr in gen:
+        print(arr.shape)
         goal_tens = convert_numpy_to_tensor(arr, gpu)
         tens_out = model.encoder(goal_tens)
         if optimize_z:
             tens_out = reverse_z(model.decoder, goal_tens, cuda=gpu,  z_size=z_size, **kwargs)
-        output.append(convert_tensor_to_numpy(tens_out))
 
-    print(np.asarray(output).shape)
+        out = convert_tensor_to_numpy(tens_out)
+        print(out.shape)
+        output.append(out)
+
     return np.concatenate(output, 0)
 
 
