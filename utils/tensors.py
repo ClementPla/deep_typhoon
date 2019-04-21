@@ -51,7 +51,13 @@ def batch_gen(arr, vector=False, batch_size=8):
             yield arr
         if arr.shape[0] < 8:
             yield arr
-    dims = arr.shape[0]
-    for i in range(math.ceil(dims/batch_size)):
-        yield arr[i*batch_size:(i+1)*batch_size]
+        else:
+            dims = arr.shape[0]
+            for i in range(math.ceil(dims/batch_size)):
+                yield arr[i*batch_size:(i+1)*batch_size]
+    else:
+        dims = arr.shape[0]
+        for i in range(math.ceil(dims / batch_size)):
+            yield arr[i * batch_size:(i + 1) * batch_size]
+
 
