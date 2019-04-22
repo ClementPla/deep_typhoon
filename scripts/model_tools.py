@@ -47,7 +47,7 @@ def encoding(model, arr, b=8, gpu=0, optimize_z=False, **kwargs):
 
 
 class MultiThreadingEncoder(Thread):
-    def __init__(self, model, gpu, dataset, folder, **options):
+    def __init__(self, model, gpu, dataset, folder, overwrite=True, **options):
 
         super(MultiThreadingEncoder, self).__init__()
         self.model = model
@@ -55,15 +55,19 @@ class MultiThreadingEncoder(Thread):
         self.dataset = dataset
         self.options = options
         self.folder = folder
+        self.overwrite = overwrite
         if not path.exists(folder):
             makedirs(folder)
 
     def run(self):
         for sequence in self.dataset:
             name = str(sequence['name'][0])
+            path_to_file = path.join(self.folder, name+'.npy')
+            if path.isfile(path_to_file) and not self.overwrite:
+                continue
             arr = sequence['data'][0]
             z = encoding(model=self.model, arr=arr, gpu=self.gpu, **self.options)
-            np.save(path.join(self.folder, name+'.npy'), z)
+            np.save(path_to_file, z)
 
 
 
