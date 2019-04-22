@@ -63,8 +63,9 @@ class MultiThreadingEncoder(Thread):
         for sequence in self.dataset:
             name = str(sequence['name'][0])
             path_to_file = path.join(self.folder, name+'.npy')
-            if path.isfile(path_to_file) and not self.overwrite:
-                continue
+            if not self.overwrite:
+                if path.isfile(path_to_file):
+                    continue
             arr = sequence['data'][0]
             z = encoding(model=self.model, arr=arr, gpu=self.gpu, **self.options)
             np.save(path_to_file, z)
