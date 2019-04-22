@@ -63,6 +63,7 @@ class MultiThreadingEncoder(Thread):
         for sequence in self.dataset:
             name = str(sequence['name'][0])
             path_to_file = path.join(self.folder, name+'.npy')
+            print(path_to_file)
             if not self.overwrite:
                 if path.isfile(path_to_file):
                     continue
