@@ -17,10 +17,15 @@ def split_dataframe(df, test_set_year=2011, validation_ratio=0.2, seed=1234):
     np.random.seed(seed)
     indexes = np.arange(len(prev2011))
     np.random.shuffle(indexes)
-    validation_indexes = indexes[:int(len(prev2011) * validation_ratio)]
-    train_indexes = indexes[int(len(prev2011) * validation_ratio):]
-    train = df.loc[prev2011[train_indexes]]
-    validation = df.loc[prev2011[validation_indexes]]
     test = df.loc[post2011]
-    return dict(train=train, validation=validation, test=test)
+    if validation_ratio:
+        validation_indexes = indexes[:int(len(prev2011) * validation_ratio)]
+        train_indexes = indexes[int(len(prev2011) * validation_ratio):]
+        train = df.loc[prev2011[train_indexes]]
+        validation = df.loc[prev2011[validation_indexes]]
+        return dict(train=train, validation=validation, test=test)
+    else:
+        train_indexes = indexes[int(len(prev2011) * validation_ratio):]
+        train = df.loc[prev2011[train_indexes]]
+        return dict(train=train, test=test)
 
