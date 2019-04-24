@@ -29,3 +29,32 @@ def split_dataframe(df, test_set_year=2011, validation_ratio=0.2, seed=1234):
         train = df.loc[prev2011[train_indexes]]
         return dict(train=train, test=test)
 
+
+from torch.utils.data import Dataset
+
+
+class TyphoonSequencesDataset(Dataset):
+    def __init__(self, df, max_length, columns=['z_space', 'm', 'l']):
+        self.sequences = np.unique(df.index.get_level_values(0))
+        self.df = df
+        self.max_length = max_length
+        self.columns = columns
+
+    def __len__(self):
+        return len(self.sequences)
+
+    def pad_seq(self, array):
+        shape = array.shape
+        pad = self.max_length - shape[0]
+        padding = [(0, pad)] + [(0, 0) for _ in shape[1:]]
+        padded_array = np.pad(array, padding, mode='constant', constant_values=0)
+        return padded_array.astype(np.float32)
+
+    def get_element(self, idx):
+        seq = self.sequences[idx]
+        seq_size = len(self.df.loc[seq][self.columns[0]])
+        results = [self.pad_seq(np.vstack(self.df.loc[seq][col])) for col in self.columns]
+        return tuple(results) + (seq_size,)
+
+    def __getitem__(self, idx):
+        return self.get_element(idx)
