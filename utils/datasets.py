@@ -63,7 +63,7 @@ class TyphoonSequencesDataset(Dataset):
             mask = np.zeros((self.max_length), dtype=np.float32)
             mask[:seq_size] = 1
 
-            return tuple((results, mask)) + (seq_size,)
+            return tuple(results) + (mask,) + (seq_size,)
 
     def __getitem__(self, idx):
         return self.get_element(idx)
