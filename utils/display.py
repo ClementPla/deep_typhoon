@@ -23,7 +23,11 @@ def animate(sequences, interval=100, blit=True, fig_size=(14,10), get_fig=False)
             for j in range(len(el)):
                 col = int(j % 2 != 0)
                 row = j//nb_col
-                seq.append(ax[row, col].imshow(np.squeeze(el[j]), cmap='gray'))
+
+                if nb_row==1:
+                    seq.append(ax[col].imshow(np.squeeze(el[j]), cmap='gray'))
+                else:
+                    seq.append(ax[row, col].imshow(np.squeeze(el[j]), cmap='gray'))
 
             animate.append(seq)
     else:
@@ -59,7 +63,10 @@ def plot_results(batch, fig_size=(14,10)):
         for j in range(nb_el):
             col = int(j % 2 != 0)
             row = j//nb_col
-            ax[row, col].imshow(np.squeeze(batch[j]), cmap='gray')
+            if nb_row==1:
+                ax[col].imshow(np.squeeze(batch[j]), cmap='gray')
+            else:
+                ax[row, col].imshow(np.squeeze(batch[j]), cmap='gray')
 
     fig.set_size_inches(*fig_size)
 

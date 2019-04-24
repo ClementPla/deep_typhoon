@@ -4,6 +4,7 @@ from scripts.latent_space import reverse_z
 from threading import Thread
 from os import makedirs, path
 
+
 def forward(model, input_imgs, b=8, gpu=0, optimize_z=False, **kwargs):
     gen = batch_gen(input_imgs, batch_size=b)
     output = []
