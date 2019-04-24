@@ -4,6 +4,7 @@ from torch import nn
 
 class LSTMNet(AbstractNet):
     def __init__(self,
+                 checkpoint,
                  input_dimensions,
                  hidden_size,
                  num_layers,
@@ -11,9 +12,10 @@ class LSTMNet(AbstractNet):
                  nb_output=2,
                  bidirectional=True,
                  cell_type='lstm',
-                 dropout=0.5):
+                 dropout=0.5,
+                 gpu=0):
 
-        super(LSTMNet, self).__init__()
+        super(LSTMNet, self).__init__(checkpoint, gpu)
 
         self.cell_type = cell_type
         if cell_type == 'lstm':
