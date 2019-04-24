@@ -26,7 +26,6 @@ def animate(sequences, interval=100, blit=True, fig_size=(14,10), get_fig=False)
                 seq.append(ax[row, col].imshow(np.squeeze(el[j]), cmap='gray'))
 
             animate.append(seq)
-
     else:
         raise ValueError("Expected type is zip, list or numpy.ndarray, got ", type(sequences))
 

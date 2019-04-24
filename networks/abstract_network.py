@@ -41,7 +41,6 @@ class AbstractNet(nn.Module):
 
         torch.save(save_dict, path)
 
-
     def load(self, path, ignore_nan=False):
         device = torch.device('cpu')
         state_dict = torch.load(path, map_location=device)['model_state_dict']
