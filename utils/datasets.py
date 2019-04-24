@@ -46,10 +46,11 @@ class TyphoonSequencesDataset(Dataset):
 
     def pad_seq(self, array):
         shape = array.shape
+        type = array.dtype
         pad = self.max_length - shape[0]
         padding = [(0, pad)] + [(0, 0) for _ in shape[1:]]
         padded_array = np.pad(array, padding, mode='constant', constant_values=0)
-        return padded_array.astype(np.float32)
+        return padded_array.astype(type)
 
     def get_element(self, idx):
         seq = self.sequences[idx]
