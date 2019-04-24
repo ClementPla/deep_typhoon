@@ -28,11 +28,14 @@ class Encoder(nn.Module):
                                 nn.Linear(in_features=1024, out_features=z_size),
                                 nn.Sigmoid())
 
-    def forward(self, ten):
-        ten = self.conv(ten)
-        ten = ten.view(len(ten), -1)
+    def forward(self, ten, get_last_conv=False):
+        conv_out = self.conv(ten)
+        ten = conv_out.view(len(conv_out), -1)
         ten = self.fc(ten)
-        return ten
+        if get_last_conv:
+            return ten
+        else:
+            return ten, conv_out
 
 
 class AE(AbstractNet):
@@ -59,16 +62,20 @@ class AE(AbstractNet):
                 if hasattr(m, "bias") and m.bias is not None and m.bias.requires_grad:
                     nn.init.constant_(m.bias, 0.0)
 
-    def forward(self, ten, only_decode=False):
+    def forward(self, ten, only_decode=False, get_last_encoder_conv=False):
         if self.training:
-            # save the original images
-            ten_original = ten
-            # encode
-            ten_encoder = self.encoder(ten)
-            # decode the tensor
-            ten = self.decoder(ten_encoder)
-            # discriminator for reconstruction
-            return ten
+            if not get_last_encoder_conv:
+                # save the original images
+                # encode
+                ten_encoder = self.encoder(ten)
+                # decode the tensor
+                ten = self.decoder(ten_encoder)
+                # discriminator for reconstruction
+                return ten
+            else:
+                ten_encoder, ten_conv_encoder = self.encoder(ten, get_last_encoder_conv)
+                ten = self.decoder(ten_encoder)
+                return ten, ten_conv_encoder
         else:
             if not only_decode:
                 encoding = self.encoder(ten)
@@ -85,7 +92,20 @@ class AE(AbstractNet):
         :param ten_predict:  predicted images (output of the decoder)
         """
 
-        # reconstruction error, not used for the loss but useful to evaluate quality
         L2Loss = nn.MSELoss()
         nle = L2Loss(ten_original, ten_predict)
         return nle
+
+    def rec_loss(self, ten_original, ten_predict, encoder_conv):
+        """
+
+        :param ten_original: original images
+        :param ten_predict:  predicted images (output of the decoder)
+        """
+
+        L2Loss = nn.MSELoss()
+        nle = L2Loss(ten_original, ten_predict)
+
+        _, rec_encoder_conv = self.encoder(ten_predict, True)
+        rec_loss = L2Loss(rec_encoder_conv, encoder_conv)
+        return nle, rec_loss
