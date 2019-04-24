@@ -31,10 +31,8 @@ def split_dataframe(df, test_set_year=2011, validation_ratio=0.2, seed=1234):
         return dict(train=train, test=test)
 
 
-
-
 class TyphoonSequencesDataset(Dataset):
-    def __init__(self, df, max_length, columns='z_space', mask_columns=False):
+    def __init__(self, df, max_length, columns='z_space', column_mask=False):
         if not isinstance(columns, list):
             columns = [columns]
         self.sequences = np.unique(df.index.get_level_values(0))
@@ -57,7 +55,7 @@ class TyphoonSequencesDataset(Dataset):
         seq = self.sequences[idx]
         seq_size = len(self.df.loc[seq][self.columns[0]])
         results = [self.pad_seq(np.vstack(self.df.loc[seq][col])) for col in self.columns]
-        if len(results)==1:
+        if len(results) == 1:
             results = results[0]
         if not self.mask_columns:
             return tuple(results) + (seq_size,)
@@ -65,7 +63,7 @@ class TyphoonSequencesDataset(Dataset):
             mask = np.zeros((self.max_length), dtype=np.float32)
             mask[:seq_size] = 1
 
-            return (results, mask)+(seq_size, )
+            return tuple((results, mask)) + (seq_size,)
 
     def __getitem__(self, idx):
         return self.get_element(idx)
