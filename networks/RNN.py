@@ -1,4 +1,4 @@
-from abstract_network import AbstractNet
+from .abstract_network import AbstractNet
 from torch import nn
 
 
@@ -9,14 +9,12 @@ class LSTMNet(AbstractNet):
                  num_layers,
                  batch_first=True,
                  nb_output=2,
-                 use_conv=False,
                  bidirectional=True,
                  cell_type='lstm',
                  dropout=0.5):
 
         super(LSTMNet, self).__init__()
 
-        self.use_conv = use_conv
         self.cell_type = cell_type
         if cell_type == 'lstm':
             self.inner_model = nn.LSTM(input_dimensions, hidden_size,
