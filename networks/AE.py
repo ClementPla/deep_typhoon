@@ -32,7 +32,7 @@ class Encoder(nn.Module):
         conv_out = self.conv(ten)
         ten = conv_out.view(len(conv_out), -1)
         ten = self.fc(ten)
-        if get_last_conv:
+        if not get_last_conv:
             return ten
         else:
             return ten, conv_out
