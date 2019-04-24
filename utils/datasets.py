@@ -57,6 +57,8 @@ class TyphoonSequencesDataset(Dataset):
         seq = self.sequences[idx]
         seq_size = len(self.df.loc[seq][self.columns[0]])
         results = [self.pad_seq(np.vstack(self.df.loc[seq][col])) for col in self.columns]
+        if len(results)==1:
+            results = results[0]
         if not self.mask_columns:
             return tuple(results) + (seq_size,)
         else:
