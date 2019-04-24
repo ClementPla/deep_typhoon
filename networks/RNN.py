@@ -42,8 +42,11 @@ class LSTMNet(AbstractNet):
                                        batch_first=batch_first,
                                        nonlinearity='tanh')
 
+        self.softmax = nn.Softmax(2)
+
     def forward(self, x):
         lstm_out = self.inner_model(x)[0]
         out = self.output_model(lstm_out)
-        return out
+        return self.softmax(out)
+
 
