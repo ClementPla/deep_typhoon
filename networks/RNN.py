@@ -46,7 +46,7 @@ class LSTMNet(AbstractNet):
 
     def forward(self, x):
         lstm_out = self.inner_model(x)[0]
-        out = self.output_model(lstm_out)
+        out = self.output_model(lstm_out)[0]
         return self.softmax(out)
 
 
