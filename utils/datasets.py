@@ -39,7 +39,7 @@ class TyphoonSequencesDataset(Dataset):
         self.df = df
         self.max_length = max_length
         self.columns = columns
-        self.mask_columns = mask_columns
+        self.column_mask = column_mask
 
     def __len__(self):
         return len(self.sequences)
@@ -57,7 +57,7 @@ class TyphoonSequencesDataset(Dataset):
         results = [self.pad_seq(np.vstack(self.df.loc[seq][col])) for col in self.columns]
         if len(results) == 1:
             results = results[0]
-        if not self.mask_columns:
+        if not self.column_mask:
             return tuple(results) + (seq_size,)
         else:
             mask = np.zeros((self.max_length), dtype=np.float32)
