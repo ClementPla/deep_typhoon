@@ -13,7 +13,8 @@ class LSTMNet(AbstractNet):
                  bidirectional=True,
                  cell_type='lstm',
                  dropout=0.5,
-                 gpu=0):
+                 gpu=0,
+                 non_linearity='tanh'):
 
         super(LSTMNet, self).__init__(checkpoint, gpu)
 
@@ -40,7 +41,7 @@ class LSTMNet(AbstractNet):
         self.output_model = nn.RNN(hidden_size * mult, nb_output,
                                        num_layers=1,
                                        batch_first=batch_first,
-                                       nonlinearity='tanh')
+                                       nonlinearity=non_linearity)
 
 
     def forward(self, x):
