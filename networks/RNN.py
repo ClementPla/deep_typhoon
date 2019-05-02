@@ -20,8 +20,7 @@ class LSTMNet(AbstractNet):
         super(LSTMNet, self).__init__(checkpoint, gpu)
 
         self.cell_type = cell_type
-        self.impute_data = impute_data
-
+        self.impute = impute
         if cell_type == 'lstm':
             self.inner_model = nn.LSTM(input_dimensions, hidden_size,
                                        dropout=dropout, num_layers=num_layers,
