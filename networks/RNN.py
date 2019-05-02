@@ -43,7 +43,6 @@ class LSTMNet(AbstractNet):
                                        batch_first=batch_first,
                                        nonlinearity=non_linearity)
 
-
     def forward(self, x):
         lstm_out = self.inner_model(x)[0]
         out = self.output_model(lstm_out)[0]
