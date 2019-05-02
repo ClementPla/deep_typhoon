@@ -46,7 +46,7 @@ class LSTMNet(AbstractNet):
                                        nonlinearity=non_linearity)
 
         if self.impute:
-            self.imputate_model = nn.RNN(input_dimensions+1, input_dimensions, 2, non_linearity='relu')
+            self.imputate_model = nn.RNN(input_dimensions+1, input_dimensions, 2, nonlinearity='relu')
 
     def forward(self, x):
         lstm_out = self.inner_model(x)[0]
