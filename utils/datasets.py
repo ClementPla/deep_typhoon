@@ -65,7 +65,7 @@ class TyphoonSequencesDataset(Dataset):
             return tuple(results) + (seq_size,)
         else:
             mask = np.zeros((self.max_length), dtype=np.float32)
-            mask[:seq_size] = 1
+            mask[:seq_size] = 1.
 
             return tuple(results) + (mask,) + (seq_size,)
 

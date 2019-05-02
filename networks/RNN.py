@@ -15,7 +15,7 @@ class LSTMNet(AbstractNet):
                  cell_type='lstm',
                  dropout=0.5,
                  gpu=0,
-                 non_linearity='tanh', impute_data = False):
+                 non_linearity='tanh', impute = False):
 
         super(LSTMNet, self).__init__(checkpoint, gpu)
 
@@ -46,22 +46,19 @@ class LSTMNet(AbstractNet):
                                        batch_first=batch_first,
                                        nonlinearity=non_linearity)
 
-        if self.impute_data:
-            self.imputation_activation = nn.ReLU()
-            self.imputation_w = Parameter(torch.Tensor(input_dimensions))
-            self.imputation_b = Parameter(torch.Tensor(input_dimensions))
+        if self.impute:
+            self.imputate_model = nn.RNN(input_dimensions+1, input_dimensions, 2, non_linearity='relu')
 
     def forward(self, x):
         lstm_out = self.inner_model(x)[0]
         out = self.output_model(lstm_out)[0]
         return out
 
-    def imputation_delay(self, l):
-        lin = nn.functional.linear(l, torch.diag(self.imputation_w), self.imputation_b)
-        return torch.exp(-1*self.imputation_activation(lin))
-
-    def imputate(self, x, m, l):
-        return x*m + (1-m)*x*self.imputation_delay(l)
+    def imputation(self, x, m, l):
+        b, s = x.size()[:2]
+        input_imputation = torch.cat([x.view(b * s, -1), l.view(b * s, -1)], dim=1).view(b, s, -1)
+        x_predicted = self.imputate_model(input_imputation)[0]
+        return x * m + (1 - m) * x_predicted
 
 
 
