@@ -47,7 +47,7 @@ class LSTMNet(AbstractNet):
                                        nonlinearity=non_linearity)
 
         if self.impute_data:
-            self.imputation_activation = nn.ReLu()
+            self.imputation_activation = nn.ReLU()
             self.imputation_w = Parameter(torch.Tensor(input_dimensions))
             self.imputation_b = Parameter(torch.Tensor(input_dimensions))
 
