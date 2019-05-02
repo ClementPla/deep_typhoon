@@ -55,13 +55,10 @@ class LSTMNet(AbstractNet):
 
     def imputation(self, x, m, l):
         b, s = x.size()[:2]
-        print("Batch size and sequence size", b, s)
-        print("Before", x.size(), l.size())
         x_flat = torch.flatten(x, 0, 1)
         l = torch.flatten(l, 0, 1)
-        print("After", x_flat.size(), l.size())
         cat_tensor = torch.cat((x_flat, l), 1)
-        input_imputation = cat_tensor.view(b,s -1)
+        input_imputation = cat_tensor.view((b,s,-1))
         x_predicted = self.imputate_model(input_imputation)[0]
         return x * m + (1 - m) * x_predicted
 
