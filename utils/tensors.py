@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import math
 
+
 def remove_nan(*tensor):
     for tens in tensor:
         tens[tens != tens] = 0
