@@ -60,7 +60,7 @@ class LSTMNet(AbstractNet):
         lin = nn.functional.linear(l, torch.diag(self.imputation_w), self.imputation_b)
         return torch.exp(-1*self.imputation_activation(lin))
 
-    def impute_data(self, x, m, l):
+    def imputate(self, x, m, l):
         return x*m + (1-m)*x*self.imputation_delay(l)
 
 
