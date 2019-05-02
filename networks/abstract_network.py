@@ -41,8 +41,12 @@ class AbstractNet(nn.Module):
 
         torch.save(save_dict, path)
 
-    def load(self, path, ignore_nan=False):
+    def load(self, path, ignore_nan=False, load_most_recent=False):
         device = torch.device('cpu')
+        if load_most_recent:
+            path = get_most_recent_file(path)
+            print("Loading model", path)
+
         state_dict = torch.load(path, map_location=device)['model_state_dict']
         if not ignore_nan:
             check_nan(state_dict)
