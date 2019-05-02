@@ -2,7 +2,6 @@ from .abstract_network import AbstractNet
 from torch import nn
 from torch.nn.parameter import Parameter
 import torch
-from .. import functional as F
 
 class LSTMNet(AbstractNet):
     def __init__(self,
@@ -58,7 +57,7 @@ class LSTMNet(AbstractNet):
         return out
 
     def imputation_delay(self, l):
-        lin = F.linear(l, torch.diag(self.imputation_w), self.imputation_b)
+        lin = nn.functional.linear(l, torch.diag(self.imputation_w), self.imputation_b)
         return torch.exp(-1*self.imputation_activation(lin))
 
     def impute_data(self, x, m, l):
