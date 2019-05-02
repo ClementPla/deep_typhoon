@@ -57,7 +57,7 @@ class LSTMNet(AbstractNet):
         out = self.output_model(lstm_out)[0]
         return out
 
-    def get_imputation_weight(self, l):
+    def imputation_delay(self, l):
         lin = F.linear(l, torch.diag(self.imputation_w), self.imputation_b)
         return torch.exp(-1*self.imputation_activation(lin))
 
