@@ -60,7 +60,8 @@ class LSTMNet(AbstractNet):
         x_flat = torch.flatten(x, 0, 1)
         l = torch.flatten(l, 0, 1)
         print("After", x_flat.size(), l.size())
-        input_imputation = torch.cat((x_flat, l), 1).view(b,s -1)
+        cat_tensor = torch.cat((x_flat, l), 1)
+        input_imputation = cat_tensor.view(b,s -1)
         x_predicted = self.imputate_model(input_imputation)[0]
         return x * m + (1 - m) * x_predicted
 
