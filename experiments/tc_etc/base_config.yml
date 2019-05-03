@@ -1,5 +1,5 @@
 experiment:
-    output_dir : '/home/clement/code/src/tc_etc/results/'
+    output_dir : '/home/clement/code/src/tc_etc/tuning/'
     gpu : 0
     seed : 1234
 data:
@@ -11,7 +11,7 @@ data:
     nb_output : 2
 
 hp:
-    n_epochs : 250
+    n_epochs : 100
     initial_lr : 1e-4
     decay_lr : 0.5
     batch_size : 32
