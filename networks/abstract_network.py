@@ -29,9 +29,10 @@ class AbstractNet(nn.Module):
             filename += k + '_%f' % kwargs[k]
 
         filename += '.pth'
+        path = self.checkpoint+'/'
         if use_datetime:
             today = str(self._today)
-            path = join(self.checkpoint + '/', today + '/')
+            path = join(path, today + '/')
 
         create_folder(path)
         path = join(path, filename)

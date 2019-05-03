@@ -257,4 +257,3 @@ class TCxETCTrainer():
         conf = ConfMatrix.confusion_matrix(gt, pred)
         conf.labels = ['TC', 'ETC']
         self._print("Test: accuracy %f, precision %f, recall %f" % (conf.accuracy(), conf.precision(), conf.recall()))
-        
