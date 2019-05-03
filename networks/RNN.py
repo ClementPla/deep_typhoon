@@ -22,6 +22,8 @@ class LSTMNet(AbstractNet):
 
         self.cell_type = cell_type
         self.impute = impute
+        if num_layers == 1:
+            dropout = 0
         if cell_type == 'lstm':
             self.inner_model = nn.LSTM(input_dimensions, hidden_size,
                                        dropout=dropout, num_layers=num_layers,

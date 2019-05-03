@@ -28,6 +28,7 @@ network:
     hidden_size : 128
     bidirectional : True
     num_layers : 2
+    dropout : 0.5
 
 training:
     validation_freq : 16

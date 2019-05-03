@@ -1,28 +1,24 @@
-import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-from os import path
 import sys
-from sklearn import metrics
 from IPython import display
-
+import random
 
 from torch import nn, optim
 import torch
-from torch.nn.utils import clip_grad_norm_
 from torch.utils.data import DataLoader
-from torch.optim.lr_scheduler import ExponentialLR,MultiStepLR, ReduceLROnPlateau
+from torch.optim.lr_scheduler import ExponentialLR, MultiStepLR, ReduceLROnPlateau
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
+
 sys.path.insert(0, '/home/clement/code/src/deep_typhoon/')
 sys.path.insert(0, '/home/clement/code/JuNNo/lib/')
 
-import junno.datasets as J
 from junno.j_utils import log, Process
 from junno.j_utils.math import ConfMatrix
 from utils.temporal_tools import *
 from utils.datasets import *
 from utils.tensors import init_cuda_sequences_batch
 from networks.RNN import LSTMNet
+from os import path
 
 
 class TCxETCTrainer():
@@ -33,7 +29,16 @@ class TCxETCTrainer():
         self.set_model()
 
     def set_seed(self):
-        pass
+        seed = self.config.experiment.seed
+        np.random.seed(seed)
+        random.seed(seed)
+
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+        l = torch.cuda.get_rng_state()
+        torch.cuda.set_rng_state(l)
 
     def set_data(self):
         DB_PATH = self.config.data.db_path
@@ -47,20 +52,21 @@ class TCxETCTrainer():
         # Get the size of the longest sequence
         max_sequences_length = get_sequence_max_length(data)
         data = data.astype({"m": np.float32, "l": np.float32})
-        self.datasets = split_dataframe(data, test_set_year=self.config.data.test_split_set, validation_ratio=self.config.data.validation_ratio)
+        self.datasets = split_dataframe(data, test_set_year=self.config.data.test_split_set,
+                                        validation_ratio=self.config.data.validation_ratio)
         s = np.sum(self.datasets['train']['class'])
         l = len(self.datasets['train']['class'])
 
         self.class_weighting = np.asarray([s / l, 1 - (s / l)]).astype(np.float32)
 
         self.tsd_train = TyphoonSequencesDataset(self.datasets['train'], max_sequences_length,
-                                            columns=['z_space', 'class', 'm', 'l'], column_mask=True)
+                                                 columns=['z_space', 'class', 'm', 'l'], column_mask=True)
 
         self.tsd_valid = TyphoonSequencesDataset(self.datasets['validation'], max_sequences_length,
-                                            columns=['z_space', 'class', 'm', 'l'], column_mask=True)
+                                                 columns=['z_space', 'class', 'm', 'l'], column_mask=True)
 
         self.tsd_test = TyphoonSequencesDataset(self.datasets['test'], max_sequences_length,
-                                           columns=['z_space', 'class', 'm', 'l'], column_mask=True)
+                                                columns=['z_space', 'class', 'm', 'l'], column_mask=True)
 
     def set_model(self):
         self.model = LSTMNet(checkpoint=self.config.experiment.output_dir,
@@ -70,12 +76,14 @@ class TCxETCTrainer():
                              gpu=self.config.experiment.gpu,
                              impute=self.config.model.impute_missing,
                              cell_type=self.config.network.cell_type,
-                             bidirectional=self.config.network.bidirectional)
+                             bidirectional=self.config.network.bidirectional,
+                             dropout=self.config.network.dropout)
         self.model.cuda(self.config.experiment.gpu)
 
     def train(self):
         params = self.model.parameters()
-        optimizer = optim.Adam(params=params, lr=self.config.hp.initial_lr, betas=(self.config.hp.beta1, self.config.hp.beta2), eps=1e-08,
+        optimizer = optim.Adam(params=params, lr=self.config.hp.initial_lr,
+                               betas=(self.config.hp.beta1, self.config.hp.beta2), eps=1e-08,
                                weight_decay=self.config.hp.weight_decay)
 
         lr_decayer = ReduceLROnPlateau(optimizer, factor=self.config.hp.decay_lr, verbose=self.config.training.verbose,
@@ -84,7 +92,8 @@ class TCxETCTrainer():
         CEloss = nn.CrossEntropyLoss(torch.from_numpy(self.class_weighting).cuda(self.config.experiment.gpu))
 
         for e in range(self.config.hp.n_epochs):
-            train_loader = DataLoader(self.tsd_train, batch_size=self.config.hp.batch_size, shuffle=True, pin_memory=False)
+            train_loader = DataLoader(self.tsd_train, batch_size=self.config.hp.batch_size, shuffle=True,
+                                      pin_memory=False)
             batch_number = len(train_loader)
 
             with Process('Epoch %i' % (e + 1), total=batch_number) as p_epoch:
@@ -147,7 +156,7 @@ class TCxETCTrainer():
 
     def test(self, model, dataloader, get_prob=False, use_uncertain=False):
         model.eval()
-        CEloss = nn.CrossEntropyLoss(torch.from_numpy(self.class_weighting).cuda(gpu), reduction='sum')
+        CEloss = nn.CrossEntropyLoss(torch.from_numpy(self.class_weighting).cuda(self.config.experiment.gpu), reduction='sum')
         with torch.no_grad():
             full_pred = []
             full_gt = []
@@ -243,6 +252,3 @@ class TCxETCTrainer():
         conf = ConfMatrix.confusion_matrix(gt, pred)
         conf.labels = ['TC', 'ETC']
         print("Test: accuracy %f, precision %f, recall %f" % (conf.accuracy(), conf.precision(), conf.recall()))
-
-
-
