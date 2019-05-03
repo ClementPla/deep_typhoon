@@ -22,11 +22,12 @@ from os import path
 
 
 class TCxETCTrainer():
-    def __init__(self, config):
+    def __init__(self, config, s_print=None):
         self.config = config
         self.set_seed()
         self.set_data()
         self.set_model()
+        self.s_print = s_print
 
     def set_seed(self):
         seed = self.config.experiment.seed
@@ -37,7 +38,7 @@ class TCxETCTrainer():
         torch.backends.cudnn.benchmark = False
         torch.manual_seed(seed)
         torch.cuda.manual_seed_all(seed)
-      
+
     def set_data(self):
         DB_PATH = self.config.data.db_path
         DATA_PATH = path.join(DB_PATH, self.config.data.input_file)
@@ -133,8 +134,8 @@ class TCxETCTrainer():
                             conf = ConfMatrix.confusion_matrix(full_gt, full_pred)
                             conf.labels = ['TC', 'ETC']
 
-                            print("Epoch %i, iteration %s, Training loss %f" % (e + 1, i, float(l.cpu())))
-                            print("Validation: loss %f,  accuracy %f, precision %f, recall %f" % (validation_loss,
+                            self._print("Epoch %i, iteration %s, Training loss %f" % (e + 1, i, float(l.cpu())))
+                            self._print("Validation: loss %f,  accuracy %f, precision %f, recall %f" % (validation_loss,
                                                                                                   conf.accuracy(),
                                                                                                   conf.precision(),
                                                                                                   conf.recall()))
@@ -151,6 +152,12 @@ class TCxETCTrainer():
 
             p_epoch.succeed()
             lr_decayer.step(validation_loss)
+
+    def _print(self, *a, **b):
+        if self.s_print is None:
+            print(*a, **b)
+        else:
+            self.s_print(*a, **b)
 
     def test(self, model, dataloader, get_prob=False, use_uncertain=False):
         model.eval()
@@ -249,4 +256,5 @@ class TCxETCTrainer():
         pred, gt, _, prob, std = self.test(self.model, test_loader, True, 100)
         conf = ConfMatrix.confusion_matrix(gt, pred)
         conf.labels = ['TC', 'ETC']
-        print("Test: accuracy %f, precision %f, recall %f" % (conf.accuracy(), conf.precision(), conf.recall()))
+        self._print("Test: accuracy %f, precision %f, recall %f" % (conf.accuracy(), conf.precision(), conf.recall()))
+        
