@@ -16,7 +16,7 @@ hp:
     decay_lr : 0.5
     batch_size : 32
     beta1 : 0.9
-    beta : 0.999
+    beta2 : 0.999
     weight_decay : 1e-4
     
     

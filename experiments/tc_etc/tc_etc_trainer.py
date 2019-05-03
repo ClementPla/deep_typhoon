@@ -37,9 +37,7 @@ class TCxETCTrainer():
         torch.backends.cudnn.benchmark = False
         torch.manual_seed(seed)
         torch.cuda.manual_seed_all(seed)
-        l = torch.cuda.get_rng_state()
-        torch.cuda.set_rng_state(l)
-
+      
     def set_data(self):
         DB_PATH = self.config.data.db_path
         DATA_PATH = path.join(DB_PATH, self.config.data.input_file)
