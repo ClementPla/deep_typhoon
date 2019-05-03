@@ -14,6 +14,13 @@ def check_nan(state_dict):
             raise ValueError("Corrupted file")
 
 
+def init_cuda_sequences_batch(input_tensor, max_batch_length, gpu):
+    out_tens = []
+    for tens in input_tensor:
+        out_tens.append(tens.cuda(gpu)[:,:max_batch_length])
+    return tuple(out_tens)
+
+
 def convert_numpy_to_tensor(arr, cuda=None, vector=False, expect_dims=None):
     if not vector:
         if arr.ndim == 2:
