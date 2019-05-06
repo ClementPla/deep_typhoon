@@ -3,7 +3,6 @@ import torch.nn as nn
 import numpy
 from .abstract_network import AbstractNet
 from .basis_block import *
-from utils.tensors import *
 
 
 class Encoder(nn.Module):
@@ -34,6 +33,7 @@ class Encoder(nn.Module):
         ten = ten.view(len(ten), -1)
         ten = self.fc(ten)
         return ten
+
 
 class Discriminator(nn.Module):
     def __init__(self, n_channel, dim_h, dim_z):
@@ -99,36 +99,3 @@ class WAE(AbstractNet):
                 return reconstruct, encoding
             else:
                 return self.decoder(ten)
-
-    @staticmethod
-    def loss(ten_original, ten_predict, layer_original, layer_predicted, labels_original,
-             labels_sampled):
-        """
-
-        :param ten_original: original images
-        :param ten_predict:  predicted images (output of the decoder)
-        :param layer_original:  intermediate layer for original (intermediate output of the discriminator)
-        :param layer_predicted: intermediate layer for reconstructed (intermediate output of the discriminator)
-        :param labels_original: labels for original (output of the discriminator)
-        :param labels_predicted: labels for reconstructed (output of the discriminator)
-        :param labels_sampled: labels for sampled from gaussian (0,1) (output of the discriminator)
-        :return:
-        """
-
-        # reconstruction error, not used for the loss but useful to evaluate quality
-        L2Loss = nn.MSELoss()
-
-        nle = L2Loss(ten_original, ten_predict)
-        # kl-divergence
-        # mse between intermediate layers
-        mse = L2Loss(layer_original, layer_predicted)
-        # bce for decoder and discriminator for original,sampled and reconstructed
-        # the only excluded is the bce_gen_original
-
-        bce_dis_original = -torch.log(labels_original + 1e-3)
-        bce_dis_sampled = -torch.log(1 - labels_sampled + 1e-3)
-
-        bce_gen_original = -torch.log(1 - labels_original + 1e-3)
-        bce_gen_sampled = -torch.log(labels_sampled + 1e-3)
-
-        return nle, mse, bce_dis_original, bce_dis_sampled, bce_gen_original, bce_gen_sampled

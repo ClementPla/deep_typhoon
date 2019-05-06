@@ -1,0 +1,41 @@
+experiment:
+    output_dir : '/home/clement/code/src/rnn_classifier/tuning/'
+    gpu : 0
+    seed : 1234
+    task: 'tc_class' # Or 'tc_etc'
+data:
+    db_path : '/home/clement/database/'
+    input_file : 'AE_dataset.pkl'
+    test_split_set : 2013
+    validation_ratio : 0.2
+    input_dimensions : 256
+
+hp:
+    n_epochs : 100
+    initial_lr : 0.0001
+    decay_lr : 0.5
+    batch_size : 32
+    beta1 : 0.9
+    beta2 : 0.999
+    weight_decay : 0.0001
+    
+    
+model:
+    impute_missing : True
+    
+network:
+    cell_type : 'gru'
+    hidden_size : 128
+    bidirectional : True
+    num_layers : 2
+    dropout : 0.5
+
+training:
+    validation_freq : 16
+    lr_patience_decay : 25
+    verbose : False
+    save_in_timestamp_folder : False
+
+testing:
+    use_uncertain:True
+    
