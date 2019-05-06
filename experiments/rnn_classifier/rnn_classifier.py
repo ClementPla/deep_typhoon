@@ -279,7 +279,7 @@ class RNNClassifierTrainer():
         else:
             return full_pred, full_gt, full_loss
 
-    def evaluate(self):
+    def evaluate(self, prob=False):
 
         test_loader = DataLoader(dataset=self.tsd_test, batch_size=self.config.hp.batch_size,
                                  shuffle=False, pin_memory=False)
@@ -291,4 +291,7 @@ class RNNClassifierTrainer():
             conf.labels = ['TC', 'ETC']
         self._print("Test: accuracy %f, precision %f, recall %f" % (conf.accuracy(), conf.precision(), conf.recall()))
 
-        return conf
+        if prob:
+            return conf, _, prob
+        else:
+            return conf, _
