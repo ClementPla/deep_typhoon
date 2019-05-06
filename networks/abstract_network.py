@@ -26,7 +26,7 @@ class AbstractNet(nn.Module):
             if loss is not None:
                 filename += "loss_%f" % loss
         for k in kwargs:
-            filename += k + '_%f' % kwargs[k]
+            filename += '_'+k + '_%f' % kwargs[k]
 
         filename += '.pth'
         path = self.checkpoint+'/'
