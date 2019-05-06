@@ -24,7 +24,7 @@ class AbstractNet(nn.Module):
         if filename is None:
             filename = "epoch_%i_iter_%i" % (epoch, iteration)
             if loss is not None:
-                filename += "loss_%f" % loss
+                filename += "_loss_%f" % loss
         for k in kwargs:
             filename += '_'+k + '_%f' % kwargs[k]
 
