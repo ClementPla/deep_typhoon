@@ -177,7 +177,7 @@ class RNNClassifierTrainer():
                             min_criteria_validation = validation_criteria
                         else:
                             if validation_criteria < min_criteria_validation:
-                                min_criteria_validation = validation_loss
+                                min_criteria_validation = validation_criteria
                                 self.model.save_model(epoch=e, iteration=i, loss=validation_loss, f1=f1,
                                                       use_datetime=self.config.training.save_in_timestamp_folder)
 
@@ -279,7 +279,7 @@ class RNNClassifierTrainer():
         else:
             return full_pred, full_gt, full_loss
 
-    def evaluate(self, prob=False):
+    def evaluate(self, output_prob=False):
 
         test_loader = DataLoader(dataset=self.tsd_test, batch_size=self.config.hp.batch_size,
                                  shuffle=False, pin_memory=False)
@@ -291,7 +291,7 @@ class RNNClassifierTrainer():
             conf.labels = ['TC', 'ETC']
         self._print("Test: accuracy %f, precision %f, recall %f" % (conf.accuracy(), conf.precision(), conf.recall()))
 
-        if prob:
+        if output_prob:
             return conf, _, prob
         else:
             return conf, _
