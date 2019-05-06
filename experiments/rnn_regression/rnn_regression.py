@@ -209,7 +209,7 @@ class RNNRegressionTrainer():
 
                 y = y.cpu().numpy()
                 seqs_size = seqs_size.cpu().numpy()
-                full_loss += (l.cpu().numpy())
+                full_loss += l
                 for i, length in enumerate(seqs_size):
                     y_sample = y[i, :length]
                     pred_sample = pred[i, :length]
