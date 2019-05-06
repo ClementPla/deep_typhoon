@@ -162,13 +162,13 @@ class RNNClassifierTrainer():
                         if self.config.training.save_on_validation.lower() == 'loss':
                             validation_criteria = validation_loss
                         elif self.config.training.save_on_validation.lower() == 'accuracy':
-                            validation_criteria = 1/accuracy
+                            validation_criteria = -np.nan_to_num(accuracy)
                         elif self.config.training.save_on_validation.lower() == 'f1':
-                            validation_criteria = 1/f1
+                            validation_criteria = -np.nan_to_num(f1)
                         elif self.config.training.save_on_validation.lower() == 'precision':
-                            validation_criteria = 1/precision
+                            validation_criteria = -np.nan_to_num(precision)
                         elif self.config.training.save_on_validation.lower() == 'recall':
-                            validation_criteria = 1/recall
+                            validation_criteria = -np.nan_to_num(recall)
                         else:
                             raise NotImplementedError('Not implemented option for saving on validation '
                                                       + self.config.training.save_on_validation)
@@ -178,7 +178,7 @@ class RNNClassifierTrainer():
                         else:
                             if validation_criteria < min_criteria_validation:
                                 min_criteria_validation = validation_criteria
-                                self.model.save_model(epoch=e, iteration=i, loss=validation_loss, f1=f1,
+                                self.model.save_model(epoch=e, iteration=i, loss=validation_loss, f1=np.nan_to_num(f1),
                                                       use_datetime=self.config.training.save_in_timestamp_folder)
 
             p_epoch.succeed()
