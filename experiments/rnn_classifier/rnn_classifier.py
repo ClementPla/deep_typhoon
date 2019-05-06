@@ -140,7 +140,8 @@ class RNNClassifierTrainer():
 
                         if self.config.training.verbose:
                             conf = ConfMatrix.confusion_matrix(full_gt, full_pred)
-                            conf.labels = ['TC', 'ETC']
+                            if self.config.experiment.task == 'tc_etc':
+                                conf.labels = ['TC', 'ETC']
 
                             self._print("Epoch %i, iteration %s, Training loss %f" % (e + 1, i, float(l.cpu())))
                             self._print("Validation: loss %f,  accuracy %f, precision %f, recall %f" % (validation_loss,
