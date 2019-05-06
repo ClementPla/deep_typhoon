@@ -145,10 +145,10 @@ class RNNClassifierTrainer():
                                 conf.labels = ['TC', 'ETC']
 
                             self._print("Epoch %i, iteration %s, Training loss %f" % (e + 1, i, float(l.cpu())))
-                            self._print("Validation: loss %f,  accuracy %f, precision %f, recall %f" % (validation_loss,
+                            self._print("Validation: loss %f,  accuracy %f, precision %f, recall %f, F1 %f" % (validation_loss,
                                                                                                         conf.accuracy(),
                                                                                                         conf.precision(),
-                                                                                                        conf.recall()))
+                                                                                                        conf.recall()), conf.F1())
                             if e % self.config.training.html_disp == 0:
                                 display.display(conf)
 
@@ -157,7 +157,7 @@ class RNNClassifierTrainer():
                         else:
                             if validation_loss < min_validation_loss:
                                 min_validation_loss = validation_loss
-                                self.model.save_model(epoch=e, iteration=i, loss=validation_loss,
+                                self.model.save_model(epoch=e, iteration=i, loss=validation_loss, f1=conf.F1(),
                                                       use_datetime=self.config.training.save_in_timestamp_folder)
 
             p_epoch.succeed()
