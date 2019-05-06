@@ -53,7 +53,7 @@ class RNNClassifierTrainer():
             data = data[data['class'] != 7]
             data['class'] = data['class'].apply(lambda x: int(x) - 2)
         else:
-            raise NotImplementedError("Unknown task "+self.config.experiment.task)
+            raise NotImplementedError("Unknown task " + self.config.experiment.task)
         # Add time interval (inplace)
         add_time_interval(data)
         # Get the size of the longest sequence
@@ -82,7 +82,7 @@ class RNNClassifierTrainer():
                              num_layers=self.config.data.nb_output,
                              gpu=self.config.experiment.gpu,
                              impute=self.config.model.impute_missing,
-                             nb_output = self.config.data.nb_output,
+                             nb_output=self.config.data.nb_output,
                              cell_type=self.config.network.cell_type,
                              bidirectional=self.config.network.bidirectional,
                              dropout=self.config.network.dropout)
@@ -140,39 +140,45 @@ class RNNClassifierTrainer():
                         full_pred, full_gt, validation_loss = self.test(self.model, valid_loader)
                         conf = ConfMatrix.confusion_matrix(full_gt, full_pred)
 
+                        recall = conf.recall()
+                        precision = conf.precision()
+                        accuracy = conf.accuracy()
+                        f1 = 2*(precision*recall)/(precision+recall)
+
                         if self.config.training.verbose:
                             if self.config.experiment.task == 'tc_etc':
                                 conf.labels = ['TC', 'ETC']
 
                             self._print("Epoch %i, iteration %s, Training loss %f" % (e + 1, i, float(l.cpu())))
-                            self._print("Validation: loss %f,  accuracy %f, precision %f, recall %f, F1 %f" % (validation_loss,
-                                                                                                        conf.accuracy(),
-                                                                                                        conf.precision(),
-                                                                                                        conf.recall(),
-                                                                                                        conf.F1()))
+                            self._print(
+                                "Validation: loss %f,  accuracy %f, precision %f, recall %f, F1 %f" % (validation_loss,
+                                                                                                       accuracy,
+                                                                                                       precision,
+                                                                                                       recall,
+                                                                                                       f1))
                             if e % self.config.training.html_disp == 0:
                                 display.display(conf)
 
                         if self.config.training.save_on_validation.lower() is 'loss':
                             validation_criteria = validation_loss
                         elif self.config.training.save_on_validation.lower() is 'accuracy':
-                            validation_criteria = conf.accuracy()
+                            validation_criteria = accuracy
                         elif self.config.training.save_on_validation.lower() is 'f1':
-                            validation_criteria = conf.F1()
+                            validation_criteria = f1
                         elif self.config.training.save_on_validation.lower() is 'precision':
-                            validation_criteria = conf.precision()
+                            validation_criteria = precision
                         elif self.config.training.save_on_validation.lower() is 'recall':
-                            validation_criteria = conf.recall()
+                            validation_criteria = recall
                         else:
                             raise NotImplementedError('Not implemented option for saving on validation '
-                                                      +self.config.training.save_on_validation)
+                                                      + self.config.training.save_on_validation)
 
                         if e == 0:
                             min_criteria_validation = validation_criteria
                         else:
                             if validation_criteria < min_criteria_validation:
                                 min_criteria_validation = validation_loss
-                                self.model.save_model(epoch=e, iteration=i, loss=validation_loss, f1=conf.F1(),
+                                self.model.save_model(epoch=e, iteration=i, loss=validation_loss, f1=f1,
                                                       use_datetime=self.config.training.save_in_timestamp_folder)
 
             p_epoch.succeed()
@@ -281,7 +287,8 @@ class RNNClassifierTrainer():
         self.model.load(self.config.experiment.output_dir, load_most_recent=True)
         pred, gt, _, prob, std = self.test(self.model, test_loader, True, 100)
         conf = ConfMatrix.confusion_matrix(gt, pred)
-        conf.labels = ['TC', 'ETC']
+        if self.config.experiment.task == 'tc_etc':
+            conf.labels = ['TC', 'ETC']
         self._print("Test: accuracy %f, precision %f, recall %f" % (conf.accuracy(), conf.precision(), conf.recall()))
 
         return conf
