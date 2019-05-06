@@ -46,13 +46,14 @@ class RNNClassifierTrainer():
         DATA_PATH = path.join(DB_PATH, self.config.data.input_file)
         data = pd.read_pickle(DATA_PATH)
         data.drop(['sequences', 'indexes'], axis=1, inplace=True)
-        if self.config.experiment.task == 'rnn_classifier':
+        if self.config.experiment.task == 'tc_etc':
             data['class'] = data['class'].apply(lambda x: 0 if int(x) != 6 else 1)
         elif self.config.experiment.task == 'tc_class':
             data = data[data['class'] != 6]
             data = data[data['class'] != 7]
             data['class'] = data['class'].apply(lambda x: int(x) - 2)
-
+        else:
+            raise NotImplementedError("Unknown task "+self.config.experiment.task)
         # Add time interval (inplace)
         add_time_interval(data)
         # Get the size of the longest sequence
