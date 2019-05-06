@@ -214,7 +214,7 @@ class RNNRegressionTrainer():
                     pred_sample = pred[i, :length]
                     full_gt.append(y_sample.flatten())
                     full_pred.append(pred_sample.flatten())
-                    full_loss.append(l[i, :seq])
+                    full_loss.append(l[i, :length])
                     if use_uncertain:
                         full_std.append(std_out[i, :length])
 
