@@ -82,6 +82,7 @@ class RNNClassifierTrainer():
                              num_layers=self.config.data.nb_output,
                              gpu=self.config.experiment.gpu,
                              impute=self.config.model.impute_missing,
+                             nb_output = self.config.data.nb_output,
                              cell_type=self.config.network.cell_type,
                              bidirectional=self.config.network.bidirectional,
                              dropout=self.config.network.dropout)
