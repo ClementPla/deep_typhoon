@@ -35,56 +35,39 @@ class Encoder(nn.Module):
         ten = self.fc(ten)
         return ten
 
-
 class Discriminator(nn.Module):
-    def __init__(self, channel_in=1, recon_level=3):
+    def __init__(self, n_channel, dim_h, dim_z):
         super(Discriminator, self).__init__()
-        self.size = channel_in
-        self.recon_levl = recon_level
-        # module list because we need need to extract an intermediate output
-        self.conv = nn.ModuleList()
-        self.conv.append(nn.Sequential(
-            nn.Conv2d(in_channels=channel_in, out_channels=32, kernel_size=5, stride=1, padding=2),
-            nn.ReLU(inplace=True)))
-        self.size = 32
-        self.conv.append(EncoderBlock(channel_in=self.size, channel_out=64))
-        self.size = 64
-        self.conv.append(EncoderBlock(channel_in=self.size, channel_out=128))
-        self.size = 128
-        self.conv.append(EncoderBlock(channel_in=self.size, channel_out=256))
-        self.size = 256
-        self.conv.append(EncoderBlock(channel_in=self.size, channel_out=256))
-        self.size = 256
-        self.conv.append(EncoderBlock(channel_in=self.size, channel_out=512))
-        self.size = 512
-        self.conv.append(EncoderBlock(channel_in=self.size, channel_out=512))
 
-        # final fc to get the score (real or fake)
-        self.fc = nn.Sequential(
-            nn.Linear(in_features=8 * 8 * 512, out_features=512, bias=False),
-            nn.BatchNorm1d(num_features=512, momentum=0.9),
-            nn.ReLU(inplace=True),
-            nn.Linear(in_features=512, out_features=1),
+        self.n_channel = n_channel
+        self.dim_h = dim_h
+        self.n_z = dim_z
+
+        self.main = nn.Sequential(
+            nn.Linear(self.n_z, self.dim_h * 4),
+            nn.ReLU(True),
+            nn.Linear(self.dim_h * 4, self.dim_h * 4),
+            nn.ReLU(True),
+            nn.Linear(self.dim_h * 4, self.dim_h * 4),
+            nn.ReLU(True),
+            nn.Linear(self.dim_h * 4, self.dim_h * 4),
+            nn.ReLU(True),
+            nn.Linear(self.dim_h * 4, 1),
+            nn.Sigmoid()
         )
 
-    def forward(self, ten):
-
-        for i, lay in enumerate(self.conv):
-            ten = lay(ten)
-        ten = ten.view(len(ten), -1)
-        ten = self.fc(ten)
-        return torch.sigmoid(ten)
+    def forward(self, x):
+        x = self.main(x)
+        return x
 
 
 class WAE(AbstractNet):
-    def __init__(self, channel_in=1, z_size=128, recon_level=3, gpu=1, checkpoint='', upsampling='transposed'):
+    def __init__(self, channel_in=1, z_size=128, dim_h=128, gpu=1, checkpoint='', upsampling='nearest'):
         super(WAE, self).__init__(gpu=gpu, checkpoint=checkpoint, upsampling=upsampling)
-        # latent space size
         self.z_size = z_size
         self.encoder = Encoder(z_size=self.z_size, channel_in=channel_in)
         self.decoder = Decoder(z_size=self.z_size, size=self.encoder.size, upsampling=upsampling)
-        self.discriminator = Discriminator(channel_in=channel_in, recon_level=recon_level)
-        # self-defined function to init the parameters
+        self.discriminator = Discriminator(channel_in, dim_h=dim_h, dim_z=z_size)
         self.init_parameters()
 
     def init_parameters(self):
