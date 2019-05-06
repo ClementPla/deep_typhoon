@@ -198,8 +198,7 @@ class RNNRegressionTrainer():
                     out = model(packed_sequence)
                     output, input_sizes = pad_packed_sequence(out, batch_first=True)
 
-                mask_seq = torch.flatten(mask_seq).view(-1, 1)
-                masked_output = mask_seq * output.view(-1, output.size()[-1])
+                masked_output = mask_seq * torch.squeeze(output)
 
                 l = MSEloss(masked_output, torch.squeeze(y)).cpu().numpy()
 
