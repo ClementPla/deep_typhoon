@@ -70,7 +70,7 @@ class RNNRegressionTrainer():
         self.model = LSTMNet(checkpoint=self.config.experiment.output_dir,
                              input_dimensions=self.config.data.input_dimensions,
                              hidden_size=self.config.network.hidden_size,
-                             num_layers=self.config.data.nb_output,
+                             num_layers=self.config.network.num_layers,
                              gpu=self.config.experiment.gpu,
                              impute=self.config.model.impute_missing,
                              nb_output=1,
