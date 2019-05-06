@@ -159,15 +159,15 @@ class RNNClassifierTrainer():
                             if e % self.config.training.html_disp == 0:
                                 display.display(conf)
 
-                        if self.config.training.save_on_validation.lower() is 'loss':
+                        if self.config.training.save_on_validation.lower() == 'loss':
                             validation_criteria = validation_loss
-                        elif self.config.training.save_on_validation.lower() is 'accuracy':
+                        elif self.config.training.save_on_validation.lower() == 'accuracy':
                             validation_criteria = accuracy
-                        elif self.config.training.save_on_validation.lower() is 'f1':
+                        elif self.config.training.save_on_validation.lower() == 'f1':
                             validation_criteria = f1
-                        elif self.config.training.save_on_validation.lower() is 'precision':
+                        elif self.config.training.save_on_validation.lower() == 'precision':
                             validation_criteria = precision
-                        elif self.config.training.save_on_validation.lower() is 'recall':
+                        elif self.config.training.save_on_validation.lower() == 'recall':
                             validation_criteria = recall
                         else:
                             raise NotImplementedError('Not implemented option for saving on validation '
