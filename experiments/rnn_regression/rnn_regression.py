@@ -157,12 +157,12 @@ class RNNRegressionTrainer():
 
     def test(self, model, dataloader, use_uncertain=False):
         model.eval()
-        MSEloss = nn.L1Loss()
+        MSEloss = nn.L1Loss(reduction='none')
         with torch.no_grad():
             full_pred = []
             full_gt = []
             full_std = []
-            full_loss = 0
+            full_loss = []
             nb_sequences = 0
             for j, valid_batch in enumerate(dataloader):
                 seqs_size = valid_batch[-1].cuda(self.config.experiment.gpu)
@@ -209,18 +209,18 @@ class RNNRegressionTrainer():
 
                 y = y.cpu().numpy()
                 seqs_size = seqs_size.cpu().numpy()
-                full_loss += l
                 for i, length in enumerate(seqs_size):
                     y_sample = y[i, :length]
                     pred_sample = pred[i, :length]
                     full_gt.append(y_sample.flatten())
                     full_pred.append(pred_sample.flatten())
+                    full_loss.append(l[i, :seq])
                     if use_uncertain:
                         full_std.append(std_out[i, :length])
 
         full_pred = np.hstack(full_pred)
         full_gt = np.hstack(full_gt)
-        full_loss = full_loss / full_gt.shape[0]
+        full_loss = np.mean(np.hstack(full_loss))
 
         if use_uncertain:
             return full_pred, full_gt, full_loss, full_std
