@@ -89,7 +89,7 @@ class RNNRegressionTrainer():
         lr_decayer = ReduceLROnPlateau(optimizer, factor=self.config.hp.decay_lr, verbose=self.config.training.verbose,
                                        patience=self.config.training.lr_patience_decay)
 
-        MSEloss = nn.MSEloss()
+        MSEloss = nn.MSELoss()
 
         for e in range(self.config.hp.n_epochs):
             train_loader = DataLoader(self.tsd_train, batch_size=self.config.hp.batch_size, shuffle=True,
@@ -157,7 +157,7 @@ class RNNRegressionTrainer():
 
     def test(self, model, dataloader, use_uncertain=False):
         model.eval()
-        MSEloss = nn.MSEloss()
+        MSEloss = nn.MSELoss()
         with torch.no_grad():
             full_pred = []
             full_gt = []
