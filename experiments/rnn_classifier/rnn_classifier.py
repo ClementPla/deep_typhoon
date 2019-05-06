@@ -292,6 +292,6 @@ class RNNClassifierTrainer():
         self._print("Test: accuracy %f, precision %f, recall %f" % (conf.accuracy(), conf.precision(), conf.recall()))
 
         if output_prob:
-            return conf, _, prob
+            return conf, prob
         else:
-            return conf, _
+            return conf
