@@ -21,13 +21,15 @@ from networks.RNN import LSTMNet
 from os import path
 
 
-class TCxETCTrainer():
-    def __init__(self, config, s_print=None):
+class RNNClassifierTrainer():
+    def __init__(self, config, s_print=None, initialize=True):
         self.config = config
-        self.set_seed()
-        self.set_data()
-        self.set_model()
         self.s_print = s_print
+
+        self.set_seed()
+        if initialize:
+            self.set_data()
+            self.set_model()
 
     def set_seed(self):
         seed = self.config.experiment.seed
@@ -44,7 +46,12 @@ class TCxETCTrainer():
         DATA_PATH = path.join(DB_PATH, self.config.data.input_file)
         data = pd.read_pickle(DATA_PATH)
         data.drop(['sequences', 'indexes'], axis=1, inplace=True)
-        data['class'] = data['class'].apply(lambda x: 0 if int(x) != 6 else 1)
+        if self.config.experiment.task == 'rnn_classifier':
+            data['class'] = data['class'].apply(lambda x: 0 if int(x) != 6 else 1)
+        elif self.config.experiment.task == 'tc_class':
+            data = data[data['class'] != 6]
+            data = data[data['class'] != 7]
+            data['class'] = data['class'].apply(lambda x: int(x) - 2)
 
         # Add time interval (inplace)
         add_time_interval(data)
@@ -53,10 +60,10 @@ class TCxETCTrainer():
         data = data.astype({"m": np.float32, "l": np.float32})
         self.datasets = split_dataframe(data, test_set_year=self.config.data.test_split_set,
                                         validation_ratio=self.config.data.validation_ratio)
-        s = np.sum(self.datasets['train']['class'])
-        l = len(self.datasets['train']['class'])
 
-        self.class_weighting = np.asarray([s / l, 1 - (s / l)]).astype(np.float32)
+        values, _ = np.histogram(self.datasets['train']['class'], len(np.unique(self.datasets['train']['class'])))
+
+        self.class_weighting = (1 - np.asarray(values) / sum(values)).astype(np.float32)
 
         self.tsd_train = TyphoonSequencesDataset(self.datasets['train'], max_sequences_length,
                                                  columns=['z_space', 'class', 'm', 'l'], column_mask=True)
@@ -136,9 +143,9 @@ class TCxETCTrainer():
 
                             self._print("Epoch %i, iteration %s, Training loss %f" % (e + 1, i, float(l.cpu())))
                             self._print("Validation: loss %f,  accuracy %f, precision %f, recall %f" % (validation_loss,
-                                                                                                  conf.accuracy(),
-                                                                                                  conf.precision(),
-                                                                                                  conf.recall()))
+                                                                                                        conf.accuracy(),
+                                                                                                        conf.precision(),
+                                                                                                        conf.recall()))
                             if e % self.config.training.html_disp == 0:
                                 display.display(conf)
 
@@ -155,13 +162,14 @@ class TCxETCTrainer():
 
     def _print(self, *a, **b):
         if self.s_print is None:
-            print(*a, **b)
+            print(*a, ** b)
         else:
             self.s_print(*a, **b)
 
     def test(self, model, dataloader, get_prob=False, use_uncertain=False):
         model.eval()
-        CEloss = nn.CrossEntropyLoss(torch.from_numpy(self.class_weighting).cuda(self.config.experiment.gpu), reduction='sum')
+        CEloss = nn.CrossEntropyLoss(torch.from_numpy(self.class_weighting).cuda(self.config.experiment.gpu),
+                                     reduction='sum')
         with torch.no_grad():
             full_pred = []
             full_gt = []
@@ -257,3 +265,5 @@ class TCxETCTrainer():
         conf = ConfMatrix.confusion_matrix(gt, pred)
         conf.labels = ['TC', 'ETC']
         self._print("Test: accuracy %f, precision %f, recall %f" % (conf.accuracy(), conf.precision(), conf.recall()))
+
+        return conf
