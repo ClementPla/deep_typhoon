@@ -89,7 +89,7 @@ class RNNRegressionTrainer():
         lr_decayer = ReduceLROnPlateau(optimizer, factor=self.config.hp.decay_lr, verbose=self.config.training.verbose,
                                        patience=self.config.training.lr_patience_decay)
 
-        CEloss = nn.CrossEntropyLoss(torch.from_numpy(self.class_weighting).cuda(self.config.experiment.gpu))
+        MSEloss = nn.MSEloss()
 
         for e in range(self.config.hp.n_epochs):
             train_loader = DataLoader(self.tsd_train, batch_size=self.config.hp.batch_size, shuffle=True,
@@ -117,7 +117,7 @@ class RNNRegressionTrainer():
                     mask_seq = torch.flatten(mask_seq).view(-1, 1)
                     y = torch.flatten(y)
                     masked_output = mask_seq * output
-                    l = CEloss(masked_output, y)
+                    l = MSEloss(masked_output, y)
                     self.model.zero_grad()
                     # encoder
                     l.backward(retain_graph=True)
