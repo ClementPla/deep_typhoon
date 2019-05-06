@@ -37,6 +37,7 @@ training:
     verbose : False
     html_disp : 15
     save_in_timestamp_folder : False
+    save_on_validation : 'loss' # Can be 'accuracy', 'f1', 'loss'
 
 testing:
     use_uncertain:True
