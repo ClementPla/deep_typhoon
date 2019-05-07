@@ -87,7 +87,8 @@ class LSTMNet(AbstractNet):
         params = []
         if self.learn_hidden_state:
             params.append(self.h0_i)
-            params.append(self.h0_o)
+            if self.output_cell_type == 'rnn':
+                params.append(self.h0_o)
             if self.cell_type == 'lstm':
                 params.append(self.c0_i)
 
