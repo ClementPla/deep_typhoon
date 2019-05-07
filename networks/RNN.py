@@ -25,7 +25,7 @@ class LSTMNet(AbstractNet):
 
         self.cell_type = cell_type
         self.impute = impute
-        self.output_cell = output_cell
+        self.output_cell_type = output_cell
         self.nb_output = nb_output
         self.learn_hidden_state = learn_hidden_state
 
@@ -52,13 +52,13 @@ class LSTMNet(AbstractNet):
 
         self.hidden_dimension = mult*hidden_size
 
-        if self.output_cell == 'rnn':
-            self.last_cell = nn.RNN(hidden_size * mult, nb_output,
+        if self.output_cell_type == 'rnn':
+            self.output_cell = nn.RNN(hidden_size * mult, nb_output,
                                       num_layers=1,
                                       batch_first=batch_first,
                                       nonlinearity=output_activation)
-        elif self.output_cell == 'fc':
-            self.last_cell = nn.Linear(hidden_size * mult, nb_output)
+        elif self.output_cell_type == 'fc':
+            self.output_cell = nn.Linear(hidden_size * mult, nb_output)
 
         if self.impute:
             self.imputate_model = nn.RNN(input_dimensions + 1, input_dimensions // mult, 2, nonlinearity='relu',
@@ -68,7 +68,7 @@ class LSTMNet(AbstractNet):
             self.h0_i = nn.Parameter(torch.zeros(num_layers*mult,1, hidden_size))
             self.c0_i = nn.Parameter(torch.zeros(num_layers*mult,1, hidden_size))
 
-            if self.output_cell == 'rnn':
+            if self.output_cell_type == 'rnn':
                 self.h0_o = nn.Parameter(torch.zeros(1,1, nb_output))
                 self.c0_o = nn.Parameter(torch.zeros(1, 1, nb_output))
 
@@ -79,24 +79,24 @@ class LSTMNet(AbstractNet):
         else:
             lstm_out, _ = self.inner_model(x)
 
-        if self.output_cell == 'direct':
+        if self.output_cell_type == 'direct':
             return lstm_out
 
-        elif self.output_cell == 'fc':
+        elif self.output_cell_type == 'fc':
             time_step = lstm_out.size(1)
             l_out = lstm_out.view(-1, self.hidden_dimension)
-            outs = self.last_cell(l_out).view(-1, time_step, self.nb_output)
+            outs = self.output_cell(l_out).view(-1, time_step, self.nb_output)
             return outs
 
-        elif self.output_cell == 'rnn':
+        elif self.output_cell_type == 'rnn':
             if self.learn_hidden_state:
-                out, _ = self.last_cell(lstm_out, (self.h0_o.repeat(1, b, 1), self.c0_o.repeat(1, b, 1)))
+                out, _ = self.output_cell(lstm_out, (self.h0_o.repeat(1, b, 1), self.c0_o.repeat(1, b, 1)))
             else:
-                out, _ = self.last_cell(lstm_out)
+                out, _ = self.output_cell(lstm_out)
             return out
 
         else:
-            raise ValueError('Not expected cell type', self.output_cell)
+            raise ValueError('Not expected cell type', self.output_cell_type)
 
     def imputation(self, x, m, l):
         b, s = x.size()[:2]
