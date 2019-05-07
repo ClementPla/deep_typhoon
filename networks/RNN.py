@@ -68,12 +68,13 @@ class LSTMNet(AbstractNet):
                                          bidirectional=bidirectional)
 
         if self.learn_hidden_state:
-            self.h0_i = nn.Parameter(torch.zeros(num_layers*mult,1, hidden_size))
-            self.c0_i = nn.Parameter(torch.zeros(num_layers*mult,1, hidden_size))
+            self.h0_i = nn.Parameter(torch.zeros(num_layers*mult, 1, hidden_size))
+
+            if self.cell_type=='lstm':
+                self.c0_i = nn.Parameter(torch.zeros(num_layers*mult, 1, hidden_size))
 
             if self.output_cell_type == 'rnn':
                 self.h0_o = nn.Parameter(torch.zeros(1,1, nb_output))
-                self.c0_o = nn.Parameter(torch.zeros(1, 1, nb_output))
 
     def unpad(self, x):
         if self.optim_rnn:
@@ -82,12 +83,14 @@ class LSTMNet(AbstractNet):
             return x
 
     def forward(self, x, seqs_size):
+        b = x.size(0)
         if self.optim_rnn:
             x = pack_padded_sequence(x, seqs_size, batch_first=self.batch_first, enforce_sorted=False)
-
         if self.learn_hidden_state:
-            b = torch.max(x.batch_sizes)
-            lstm_out, _ = self.inner_model(x, (self.h0_i.repeat(1, b, 1), self.c0_i.repeat(1, b, 1)))
+            if self.cell_type == 'lstm':
+                lstm_out, _ = self.inner_model(x, (self.h0_i.repeat(1, b, 1), self.c0_i.repeat(1, b, 1)))
+            else:
+                lstm_out, _ = self.inner_model(x, self.h0_i.repeat(1, b, 1))
         else:
             lstm_out, _ = self.inner_model(x)
 
@@ -103,7 +106,7 @@ class LSTMNet(AbstractNet):
 
         elif self.output_cell_type == 'rnn':
             if self.learn_hidden_state:
-                out, _ = self.output_cell(lstm_out, (self.h0_o.repeat(1, b, 1), self.c0_o.repeat(1, b, 1)))
+                out, _ = self.output_cell(lstm_out, self.h0_o.repeat(1, b, 1))
             else:
                 out, _ = self.output_cell(lstm_out)
 
