@@ -65,7 +65,7 @@ class LSTMNet(AbstractNet):
 
         if self.impute:
             self.imputate_model = nn.RNN(input_dimensions + 1, input_dimensions // mult, num_layers=2, nonlinearity='relu',
-                                         bidirectional=bidirectional)
+                                         bidirectional=bidirectional, batch_first=batch_first)
 
         if self.learn_hidden_state:
 
