@@ -88,7 +88,8 @@ class RNNClassifierTrainer():
                              dropout=self.config.network.dropout,
                              output_activation=self.config.network.output_activation,
                              learn_hidden_state=self.config.network.learn_hidden_state,
-                             output_cell=self.config.network.output_cell)
+                             output_cell=self.config.network.output_cell,
+                             optim_rnn=self.config.model.enable_optimization)
         self.model.cuda(self.config.experiment.gpu)
 
     def train(self):
@@ -121,10 +122,9 @@ class RNNClassifierTrainer():
                         m = input_train[2]
                         l = input_train[3]
                         x = self.model.imputation(x, m, l)
-                    packed_sequence = pack_padded_sequence(x, seqs_size, batch_first=True, enforce_sorted=False)
-                    out = self.model(packed_sequence)
-                    output, input_sizes = pad_packed_sequence(out, batch_first=True)
-                    output = output.view(-1, output.size()[-1])
+                    output = self.model(x, seqs_size)
+
+                    output = output.view(-1, output.size(-1))
                     mask_seq = torch.flatten(mask_seq).view(-1, 1)
                     y = torch.flatten(y)
                     masked_output = mask_seq * output

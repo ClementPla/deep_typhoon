@@ -7,7 +7,6 @@ from torch import nn, optim
 import torch
 from torch.utils.data import DataLoader
 from torch.optim.lr_scheduler import ExponentialLR, MultiStepLR, ReduceLROnPlateau
-from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
 sys.path.insert(0, '/home/clement/code/src/deep_typhoon/')
 sys.path.insert(0, '/home/clement/code/JuNNo/lib/')
@@ -125,9 +124,7 @@ class RNNRegressionTrainer():
                         m = input_train[2]
                         l = input_train[3]
                         x = self.model.imputation(x, m, l)
-                    packed_sequence = pack_padded_sequence(x, seqs_size, batch_first=True, enforce_sorted=False)
-                    out = self.model(packed_sequence)
-                    output, input_sizes = pad_packed_sequence(out, batch_first=True)
+                    output = self.model(x, seqs_size)
 
                     mask_seq = torch.flatten(mask_seq)
                     y = torch.flatten(y)

@@ -2,6 +2,7 @@ from .abstract_network import AbstractNet
 from torch import nn
 from torch.nn.parameter import Parameter
 import torch
+from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
 
 class LSTMNet(AbstractNet):
@@ -19,7 +20,8 @@ class LSTMNet(AbstractNet):
                  impute=False,
                  output_cell='rnn',
                  output_activation='rnn',
-                 learn_hidden_state=False):
+                 learn_hidden_state=False,
+                 optim_rnn=True):
 
         super(LSTMNet, self).__init__(checkpoint, gpu)
 
@@ -28,7 +30,8 @@ class LSTMNet(AbstractNet):
         self.output_cell_type = output_cell
         self.nb_output = nb_output
         self.learn_hidden_state = learn_hidden_state
-
+        self.optim_rnn = optim_rnn
+        self.batch_first = batch_first
         if num_layers == 1:
             dropout = 0
         if cell_type == 'lstm':
@@ -72,7 +75,16 @@ class LSTMNet(AbstractNet):
                 self.h0_o = nn.Parameter(torch.zeros(1,1, nb_output))
                 self.c0_o = nn.Parameter(torch.zeros(1, 1, nb_output))
 
-    def forward(self, x):
+    def unpad(self, x):
+        if self.optim_rnn:
+            return pad_packed_sequence(x, batch_first=self.batch_first)[0]
+        else:
+            return x
+
+    def forward(self, x, seqs_size):
+        if self.optim_rnn:
+            x = pack_padded_sequence(x, seqs_size, batch_first=self.batch_first, enforce_sorted=False)
+
         if self.learn_hidden_state:
             b = torch.max(x.batch_sizes)
             lstm_out, _ = self.inner_model(x, (self.h0_i.repeat(1, b, 1), self.c0_i.repeat(1, b, 1)))
@@ -80,11 +92,12 @@ class LSTMNet(AbstractNet):
             lstm_out, _ = self.inner_model(x)
 
         if self.output_cell_type == 'direct':
-            return lstm_out
+            return self.unpad(lstm_out)
 
         elif self.output_cell_type == 'fc':
-            time_step = lstm_out.size(1)
-            l_out = lstm_out.view(-1, self.hidden_dimension)
+            out = self.unpad(lstm_out)
+            time_step = out.size(1)
+            l_out = out.view(-1, self.hidden_dimension)
             outs = self.output_cell(l_out).view(-1, time_step, self.nb_output)
             return outs
 
@@ -93,7 +106,8 @@ class LSTMNet(AbstractNet):
                 out, _ = self.output_cell(lstm_out, (self.h0_o.repeat(1, b, 1), self.c0_o.repeat(1, b, 1)))
             else:
                 out, _ = self.output_cell(lstm_out)
-            return out
+
+            return self.unpad(out)
 
         else:
             raise ValueError('Not expected cell type', self.output_cell_type)
