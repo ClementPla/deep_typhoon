@@ -242,13 +242,13 @@ class RNNRegressionTrainer():
         else:
             return full_pred, full_gt, full_loss
 
-    def evaluate(self):
+    def evaluate(self, use_uncertain=100):
 
         test_loader = DataLoader(dataset=self.tsd_test, batch_size=self.config.hp.batch_size,
                                  shuffle=False, pin_memory=False)
 
         self.model.load(self.config.experiment.output_dir, load_most_recent=True)
-        pred, gt, loss, std = self.test(self.model, test_loader, True, 100)
+        pred, gt, loss, std = self.test(self.model, test_loader, use_uncertain)
         self._print("Test: loss %f" % loss)
 
         return loss, pred, std
