@@ -159,5 +159,8 @@ class LSTMNet(AbstractNet):
         l = torch.flatten(l, 0, 1)
         cat_tensor = torch.cat((x_flat, l), 1)
         input_imputation = cat_tensor.view((b, s, -1))
-        x_predicted = self.imputate_model(input_imputation, self.h0_imp.repeat(1, b, 1))[0]
+        if self.learn_hidden_state:
+            x_predicted = self.imputate_model(input_imputation, self.h0_imp.repeat(1, b, 1))[0]
+        else:
+            x_predicted = self.imputate_model(input_imputation)[0]
         return x * m + (1 - m) * x_predicted
