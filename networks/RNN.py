@@ -53,7 +53,7 @@ class LSTMNet(AbstractNet):
 
         mult = 2 if bidirectional else 1
 
-        self.hidden_dimension = mult*hidden_size
+        self.hidden_dimension = mult * hidden_size
 
         if self.output_cell_type == 'rnn':
             self.output_cell = nn.RNN(hidden_size * mult, nb_output,
@@ -68,19 +68,30 @@ class LSTMNet(AbstractNet):
                                          bidirectional=bidirectional)
 
         if self.learn_hidden_state:
-            self.h0_i = nn.Parameter(torch.zeros(num_layers*mult, 1, hidden_size))
+            self.h0_i = nn.Parameter(torch.zeros(num_layers * mult, 1, hidden_size))
 
-            if self.cell_type=='lstm':
-                self.c0_i = nn.Parameter(torch.zeros(num_layers*mult, 1, hidden_size))
+            if self.cell_type == 'lstm':
+                self.c0_i = nn.Parameter(torch.zeros(num_layers * mult, 1, hidden_size))
 
             if self.output_cell_type == 'rnn':
-                self.h0_o = nn.Parameter(torch.zeros(1,1, nb_output))
+                self.h0_o = nn.Parameter(torch.zeros(1, 1, nb_output))
 
     def unpad(self, x):
         if self.optim_rnn:
             return pad_packed_sequence(x, batch_first=self.batch_first)[0]
         else:
             return x
+
+    @property
+    def hidden_states(self):
+        params = []
+        if self.learn_hidden_state:
+            params.append(self.h0_i)
+            params.append(self.h0_o)
+            if self.cell_type == 'lstm':
+                params.append(self.c0_i)
+
+        return params
 
     def forward(self, x, seqs_size):
         b = x.size(0)
