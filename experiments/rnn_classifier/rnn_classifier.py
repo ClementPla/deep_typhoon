@@ -232,7 +232,6 @@ class RNNClassifierTrainer():
                     n_iter = use_uncertain
                     for i in range(n_iter):
                         output = model(x, seqs_size)
-
                         size = output.size()
                         outs.append(output)
                     outs = torch.cat(outs).view(n_iter, *size)
@@ -276,8 +275,8 @@ class RNNClassifierTrainer():
                 return np.exp(alpha * x) / np.expand_dims(np.sum(np.exp(alpha * x), axis=1), 1)
 
             full_prob = np.vstack(full_prob)
-            full_std = np.vstack(full_std)
             if use_uncertain:
+                full_std = np.vstack(full_std)
                 return full_pred, full_gt, full_loss, softmax(full_prob), full_std
             else:
                 return full_pred, full_gt, full_loss, softmax(full_prob)
@@ -292,13 +291,13 @@ class RNNClassifierTrainer():
                                  shuffle=False, pin_memory=False)
 
         self.model.load(self.config.experiment.output_dir, load_most_recent=True)
-        pred, gt, _, prob, std = self.test(self.model, test_loader, True, 100)
+        pred, gt, _, prob, std = self.test(self.model, test_loader, True, self.config.testing.use_uncertain)
         conf = ConfMatrix.confusion_matrix(gt, pred)
         if self.config.experiment.task == 'tc_etc':
             conf.labels = ['TC', 'ETC']
         self._print("Test: accuracy %f, precision %f, recall %f" % (conf.accuracy(), conf.precision(), conf.recall()))
 
         if output_prob:
-            return conf, prob
+            return conf, prob, std
         else:
             return conf
