@@ -78,7 +78,8 @@ class LSTMNet(AbstractNet):
     def forward(self, x):
         if self.learn_hidden_state:
             self.hidden_i = (_.repeat(1,x.size(0),1) for _ in self.hidden_i)
-            self.hidden_o = (_.repeat(1,x.size(0),1) for _ in self.hidden_o)
+            if self.output_cell=='rnn':
+                self.hidden_o = (_.repeat(1,x.size(0),1) for _ in self.hidden_o)
 
         if self.learn_hidden_state:
             lstm_out = self.inner_model(x, self.hidden_i)[0]
