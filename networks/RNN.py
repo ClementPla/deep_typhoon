@@ -85,8 +85,8 @@ class LSTMNet(AbstractNet):
             lstm_out, temp = self.inner_model(x, self.hidden_i[0])
         else:
             lstm_out, temp = self.inner_model(x)
-            print(temp[0].size())
 
+        print(temp[0].size(), temp[1].size())
         if self.output_cell == 'direct':
             return lstm_out
 
@@ -102,6 +102,9 @@ class LSTMNet(AbstractNet):
             else:
                 out = self.output_cell(lstm_out)[0]
             return out
+
+        else:
+            raise ValueError('Not expected cell type', self.output_cell)
 
     def imputation(self, x, m, l):
         b, s = x.size()[:2]
