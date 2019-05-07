@@ -75,16 +75,17 @@ class LSTMNet(AbstractNet):
                 self.output_c = nn.Parameter(torch.zeros(1, 1, nb_output))
                 self.hidden_o = (self.output_h, self.output_c)
 
-    def forward(self, x, seq_length=None):
+    def forward(self, x):
         if self.learn_hidden_state:
-            self.hidden_i = tuple([_.repeat(1, torch.max(x.batch_sizes), 1) for _ in self.hidden_i])
+            self.hidden_i = tuple([_.repeat(1, x.size(0), 1) for _ in self.hidden_i])
             if self.output_cell == 'rnn':
-                self.hidden_o = tuple([_.repeat(1, torch.max(x.batch_sizes), 1) for _ in self.hidden_o])
-        print(self.hidden_i[0].size(), self.hidden_i[1].size())
+                self.hidden_o = tuple([_.repeat(1, x.size(0), 1) for _ in self.hidden_o])
+
         if self.learn_hidden_state:
-            lstm_out = self.inner_model(x, self.hidden_i[0])[0]
+            lstm_out, temp = self.inner_model(x, self.hidden_i[0])
         else:
-            lstm_out = self.inner_model(x)[0]
+            lstm_out, temp = self.inner_model(x)
+            print(temp[0].size())
 
         if self.output_cell == 'direct':
             return lstm_out
