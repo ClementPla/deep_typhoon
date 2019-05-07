@@ -82,7 +82,7 @@ class LSTMNet(AbstractNet):
                 self.hidden_o = tuple([_.repeat(1, torch.max(x.batch_sizes), 1) for _ in self.hidden_o])
         print(self.hidden_i[0].size(), self.hidden_i[1].size())
         if self.learn_hidden_state:
-            lstm_out = self.inner_model(x, self.hidden_i)[0]
+            lstm_out = self.inner_model(x, self.hidden_i[0])[0]
         else:
             lstm_out = self.inner_model(x)[0]
 
