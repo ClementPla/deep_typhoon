@@ -57,14 +57,18 @@ class RNNRegressionTrainer():
 
         self.class_weighting = (1 - np.asarray(values) / sum(values)).astype(np.float32)
 
+        col = ['z_space', 'pressure']
+        if self.config.model.impute_missing:
+            col += ['m', 'l']
+
         self.tsd_train = TyphoonSequencesDataset(self.datasets['train'], max_sequences_length,
-                                                 columns=['z_space', 'pressure', 'm', 'l'], column_mask=True)
+                                                 columns=col, column_mask=True)
 
         self.tsd_valid = TyphoonSequencesDataset(self.datasets['validation'], max_sequences_length,
-                                                 columns=['z_space', 'pressure', 'm', 'l'], column_mask=True)
+                                                 columns=col, column_mask=True)
 
         self.tsd_test = TyphoonSequencesDataset(self.datasets['test'], max_sequences_length,
-                                                columns=['z_space', 'pressure', 'm', 'l'], column_mask=True)
+                                                columns=col, column_mask=True)
 
     def set_model(self):
         self.model = LSTMNet(checkpoint=self.config.experiment.output_dir,
@@ -113,9 +117,10 @@ class RNNRegressionTrainer():
                     packed_sequence = pack_padded_sequence(x, seqs_size, batch_first=True, enforce_sorted=False)
                     out = self.model(packed_sequence)
                     output, input_sizes = pad_packed_sequence(out, batch_first=True)
-                    output = output.view(-1, output.size()[-1])
-                    mask_seq = torch.flatten(mask_seq).view(-1, 1)
+
+                    mask_seq = torch.flatten(mask_seq)
                     y = torch.flatten(y)
+                    output = torch.flatten(output)
                     masked_output = mask_seq * output
                     l = MSEloss(masked_output, y)
                     self.model.zero_grad()
