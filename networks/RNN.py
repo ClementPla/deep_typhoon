@@ -75,7 +75,7 @@ class LSTMNet(AbstractNet):
                 self.output_c = nn.Parameter(torch.zeros(1, 1, nb_output))
                 self.hidden_o = (self.output_h, self.output_c)
 
-    def forward(self, x):
+    def forward(self, x, *args):
         if self.learn_hidden_state:
             self.hidden_i = tuple([_.repeat(1, x.size(0), 1) for _ in self.hidden_i])
             if self.output_cell == 'rnn':
