@@ -106,7 +106,7 @@ class LSTMNet(AbstractNet):
         for hc in self.hidden_states:
             try:
                 alls.remove(hc)
-            except ValueError:
+            except (ValueError, RuntimeError) as e:
                 pass
         return alls
 
@@ -116,7 +116,7 @@ class LSTMNet(AbstractNet):
         for hc in self.hidden_states:
             try:
                 alls.remove(hc)
-            except ValueError:
+            except (ValueError, RuntimeError) as e:
                 pass
         return alls
 
