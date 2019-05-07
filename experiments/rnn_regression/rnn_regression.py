@@ -126,7 +126,7 @@ class RNNRegressionTrainer():
                         l = input_train[3]
                         x = self.model.imputation(x, m, l)
                     packed_sequence = pack_padded_sequence(x, seqs_size, batch_first=True, enforce_sorted=False)
-                    out = self.model(packed_sequence)
+                    out = self.model(packed_sequence, seqs_size)
                     output, input_sizes = pad_packed_sequence(out, batch_first=True)
 
                     mask_seq = torch.flatten(mask_seq)
