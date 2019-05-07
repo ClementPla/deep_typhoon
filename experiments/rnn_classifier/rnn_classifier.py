@@ -217,17 +217,14 @@ class RNNClassifierTrainer():
                     l = input_train[3]
                     x = model.imputation(x, m, l)
 
-                packed_sequence = pack_padded_sequence(x, seqs_size, batch_first=True, enforce_sorted=False)
-
                 if use_uncertain:
                     outs = []
 
                     model.train()
                     n_iter = use_uncertain
                     for i in range(n_iter):
-                        out = model(packed_sequence)
+                        output = model(x, seqs_size)
 
-                        output, input_sizes = pad_packed_sequence(out, batch_first=True)
                         size = output.size()
                         outs.append(output)
                     outs = torch.cat(outs).view(n_iter, *size)
@@ -235,7 +232,7 @@ class RNNClassifierTrainer():
                     std_out = torch.std(outs, dim=0)
 
                 else:
-                    out = model(packed_sequence)
+                    out = model(x, seqs_size)
                     output, input_sizes = pad_packed_sequence(out, batch_first=True)
 
                 mask_seq = torch.flatten(mask_seq).view(-1, 1)

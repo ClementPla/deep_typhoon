@@ -191,16 +191,13 @@ class RNNRegressionTrainer():
                     l = input_train[3]
                     x = model.imputation(x, m, l)
 
-                packed_sequence = pack_padded_sequence(x, seqs_size, batch_first=True, enforce_sorted=False)
-
                 if use_uncertain:
                     outs = []
 
                     model.train()
                     n_iter = use_uncertain
                     for i in range(n_iter):
-                        out = model(packed_sequence)
-                        output, input_sizes = pad_packed_sequence(out, batch_first=True)
+                        output = model(x, seqs_size)
                         size = output.size()
                         outs.append(output)
 
@@ -209,8 +206,7 @@ class RNNRegressionTrainer():
                     std_out = torch.std(outs, dim=0)
 
                 else:
-                    out = model(packed_sequence)
-                    output, input_sizes = pad_packed_sequence(out, batch_first=True)
+                    output = model(x, seqs_size)
 
                 masked_output = mask_seq * torch.squeeze(output)
 
