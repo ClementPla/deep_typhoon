@@ -85,14 +85,14 @@ class RNNRegressionTrainer():
         self.model.cuda(self.config.experiment.gpu)
 
     def train(self):
-        params = self.model.inner_model.parameters() + self.model.output_model.parameters()
+        params = list(self.model.inner_model.parameters()) + list(self.model.output_model.parameters())
         optimizer = optim.Adam(params=params, lr=self.config.hp.initial_lr,
                                betas=(self.config.hp.beta1, self.config.hp.beta2), eps=1e-08,
                                weight_decay=self.config.hp.weight_decay)
 
 
         if self.config.model.impute_missing:
-            optimizer_imputation = optim.Adam(params=self.model.imputate_model, lr=1e-4,
+            optimizer_imputation = optim.Adam(params=self.model.imputate_model.parameters(), lr=1e-4,
                                    betas=(self.config.hp.beta1, self.config.hp.beta2), eps=1e-08,
                                    weight_decay=self.config.hp.weight_decay)
         else:
