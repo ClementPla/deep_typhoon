@@ -64,11 +64,15 @@ class LSTMNet(AbstractNet):
             self.output_cell = nn.Linear(hidden_size * mult, nb_output)
 
         if self.impute:
-            self.imputate_model = nn.RNN(input_dimensions + 1, input_dimensions // mult, 2, nonlinearity='relu',
+            self.imputate_model = nn.RNN(input_dimensions + 1, input_dimensions // mult, num_layers=2, nonlinearity='relu',
                                          bidirectional=bidirectional)
 
         if self.learn_hidden_state:
+
             self.h0_i = nn.Parameter(torch.zeros(num_layers * mult, 1, hidden_size))
+
+            if self.impute:
+                self.h0_imp = nn.Parameter(torch.zeros(2*mult, 1, input_dimensions//mult))
 
             if self.cell_type == 'lstm':
                 self.c0_i = nn.Parameter(torch.zeros(num_layers * mult, 1, hidden_size))
@@ -92,7 +96,29 @@ class LSTMNet(AbstractNet):
             if self.cell_type == 'lstm':
                 params.append(self.c0_i)
 
+            if self.impute:
+                params.append(self.h0_imp)
+
         return params
+
+    def get_prediction_networks_weights(self):
+        alls = list(self.inner_model.parameters())+list(self.output_cell.parameters())
+        for hc in self.hidden_states:
+            try:
+                alls.remove(hc)
+            except ValueError:
+                pass
+        return alls
+
+    def get_imputation_networks_weights(self):
+        alls = list(self.imputate_model.parameters())
+
+        for hc in self.hidden_states:
+            try:
+                alls.remove(hc)
+            except ValueError:
+                pass
+        return alls
 
     def forward(self, x, seqs_size):
         b = x.size(0)
@@ -133,5 +159,5 @@ class LSTMNet(AbstractNet):
         l = torch.flatten(l, 0, 1)
         cat_tensor = torch.cat((x_flat, l), 1)
         input_imputation = cat_tensor.view((b, s, -1))
-        x_predicted = self.imputate_model(input_imputation)[0]
+        x_predicted = self.imputate_model(input_imputation, self.h0_imp.repeat(1, b, 1))[0]
         return x * m + (1 - m) * x_predicted

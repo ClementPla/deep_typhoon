@@ -92,10 +92,19 @@ class RNNClassifierTrainer():
         self.model.cuda(self.config.experiment.gpu)
 
     def train(self):
-        params = self.model.parameters()
-        optimizer = optim.Adam(params=params, lr=self.config.hp.initial_lr,
-                               betas=(self.config.hp.beta1, self.config.hp.beta2), eps=1e-08,
-                               weight_decay=self.config.hp.weight_decay)
+
+        groups = [dict(params = self.model.get_prediction_networks_weights(),
+                       weight_decay=self.config.hp.weight_decay)]
+
+        if self.model.hidden_states:
+            groups.append({'params':self.model.hidden_states, 'weight_decay':0})
+
+        if self.config.model.impute_missing:
+            groups.append({'params':self.model.get_imputation_networks_weights(), 'lr':self.config.hp.imputation_lr})
+
+        optimizer = optim.Adam(params=groups, lr=self.config.hp.initial_lr,
+                        betas=(self.config.hp.beta1, self.config.hp.beta2),
+                        eps=1e-08)
 
         lr_decayer = ReduceLROnPlateau(optimizer, factor=self.config.hp.decay_lr, verbose=self.config.training.verbose,
                                        patience=self.config.training.lr_patience_decay)
