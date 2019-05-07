@@ -90,7 +90,7 @@ class LSTMNet(AbstractNet):
 
         elif self.output_cell == 'rnn':
             if self.learn_hidden_state:
-                out, _ = self.last_cell(lstm_out, self.(self.h0_o.repeat(1, b, 1), self.c0_o.repeat(1, b, 1)))
+                out, _ = self.last_cell(lstm_out, (self.h0_o.repeat(1, b, 1), self.c0_o.repeat(1, b, 1)))
             else:
                 out, _ = self.last_cell(lstm_out)
             return out
