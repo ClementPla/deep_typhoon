@@ -83,7 +83,7 @@ class LSTMNet(AbstractNet):
 
         print(self.hidden_i)
         if self.learn_hidden_state:
-            lstm_out = self.inner_model(x, self.hidden_i)[0]
+            lstm_out = self.inner_model(x, *self.hidden_i)[0]
         else:
             lstm_out = self.inner_model(x)[0]
 
@@ -98,7 +98,7 @@ class LSTMNet(AbstractNet):
 
         elif self.output_cell == 'rnn':
             if self.learn_hidden_state:
-                out = self.output_cell(lstm_out, self.hidden_o)[0]
+                out = self.output_cell(lstm_out, *self.hidden_o)[0]
             else:
                 out = self.output_cell(lstm_out)[0]
             return out
