@@ -92,7 +92,7 @@ class RNNRegressionTrainer():
 
 
         if self.config.model.impute_missing:
-            optimizer_imputation = optim.Adam(params=self.model.imputate_model.parameters(), lr=1e-4,
+            optimizer_imputation = optim.Adam(params=self.model.imputate_model.parameters(), lr=self.config.hp.imputation_lr,
                                    betas=(self.config.hp.beta1, self.config.hp.beta2), eps=1e-08,
                                    weight_decay=self.config.hp.weight_decay)
         else:
