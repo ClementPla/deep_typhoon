@@ -50,6 +50,7 @@ class TyphoonSequencesDataset(Dataset):
         pad = self.max_length - shape[0]
         padding = [(0, pad)] + [(0, 0) for _ in shape[1:]]
         padded_array = np.pad(array, padding, mode='constant', constant_values=0)
+
         if dtype==int:
             return padded_array.astype(dtype)
         else:
@@ -59,14 +60,12 @@ class TyphoonSequencesDataset(Dataset):
         seq = self.sequences[idx]
         seq_size = len(self.df.loc[seq][self.columns[0]])
         results = [self.pad_seq(np.vstack(self.df.loc[seq][col])) for col in self.columns]
-        if len(results) == 1:
-            results = results[0]
+
         if not self.column_mask:
             return tuple(results) + (seq_size,)
         else:
             mask = np.zeros((self.max_length), dtype=np.float32)
             mask[:seq_size] = 1.
-
             return tuple(results) + (mask,) + (seq_size,)
 
     def __getitem__(self, idx):
