@@ -30,6 +30,9 @@ network:
     bidirectional : True
     num_layers : 2
     dropout : 0.5
+    learn_hidden_state : True
+    output_cell : 'fc' # can also be 'direct' or 'rnn'
+    output_activation : 'relu' # or tanh
 
 training:
     validation_freq : 16

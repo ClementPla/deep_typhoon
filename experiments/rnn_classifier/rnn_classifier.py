@@ -85,7 +85,10 @@ class RNNClassifierTrainer():
                              nb_output=self.config.data.nb_output,
                              cell_type=self.config.network.cell_type,
                              bidirectional=self.config.network.bidirectional,
-                             dropout=self.config.network.dropout)
+                             dropout=self.config.network.dropout,
+                             output_activation=self.config.network.output_activation,
+                             learn_hidden_state=self.config.network.learn_hidden_state,
+                             output_cell=self.config.network.output_cell)
         self.model.cuda(self.config.experiment.gpu)
 
     def train(self):

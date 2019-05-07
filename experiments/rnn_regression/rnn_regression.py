@@ -81,11 +81,13 @@ class RNNRegressionTrainer():
                              cell_type=self.config.network.cell_type,
                              bidirectional=self.config.network.bidirectional,
                              dropout=self.config.network.dropout,
-                             non_linearity='relu')
+                             output_activation='relu',
+                             learn_hidden_state=self.config.network.learn_hidden_state,
+                             output_cell=self.config.network.output_cell)
         self.model.cuda(self.config.experiment.gpu)
 
     def train(self):
-        params = list(self.model.inner_model.parameters()) + list(self.model.output_model.parameters())
+        params = list(self.model.inner_model.parameters()) + list(self.model.output_cell.parameters())
         optimizer = optim.Adam(params=params, lr=self.config.hp.initial_lr,
                                betas=(self.config.hp.beta1, self.config.hp.beta2), eps=1e-08,
                                weight_decay=self.config.hp.weight_decay)
