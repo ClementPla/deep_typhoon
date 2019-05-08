@@ -45,10 +45,9 @@ def latent_space_interpolation(z1, z2, decoder, nb_frames, spherical=True):
         else:
             z = z1 * (1 - t) + z2 * t
 
-        tens = decoder(z)
+        tens = decoder(z, only_last=True)
 
         interpolated_frames.append(convert_tensor_to_numpy(tens))
-
     return interpolated_frames
 
 

@@ -29,7 +29,7 @@ def reverse_z(netG, goal, z_size, cuda, clip='disabled', lr=0.001, niter=500, in
 
     # train
     for i in range(niter):
-        g_z_approx = netG(z_approx)
+        g_z_approx = netG(z_approx, only_last=True)
         mse_g_z = mse_loss(g_z_approx, goal)
 
         # bprop

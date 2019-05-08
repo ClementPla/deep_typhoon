@@ -4,7 +4,6 @@ from scripts.latent_space import reverse_z
 from threading import Thread
 from os import makedirs, path
 
-
 def forward(model, input_imgs, b=8, gpu=0, optimize_z=False, **kwargs):
     gen = batch_gen(input_imgs, batch_size=b)
     output = []
@@ -15,7 +14,7 @@ def forward(model, input_imgs, b=8, gpu=0, optimize_z=False, **kwargs):
         z = model.encoder(tensor)
         if optimize_z:
             z = reverse_z(model.decoder, tensor, cuda=gpu, z_size=model.z_size, initial_z=z, **kwargs)
-        reconstruct = model.decoder(z)
+            reconstruct = model.decoder(z, only_last=True)
         reconstruct_array = convert_tensor_to_numpy(reconstruct, squeeze=False)
         output.append(reconstruct_array)
     return np.concatenate(output, axis=0)
@@ -26,7 +25,7 @@ def decoding(model, z, b=8, gpu=0):
     output = []
     model.eval()
     for arr in gen:
-        tens_out = model.decoder(convert_numpy_to_tensor(arr, gpu, vector=True))
+        tens_out = model.decoder(convert_numpy_to_tensor(arr, gpu, vector=True), only_last=True)
         output.append(convert_tensor_to_numpy(tens_out))
     return np.concatenate(output, 0)
 

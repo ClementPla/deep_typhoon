@@ -87,7 +87,7 @@ class Decoder(nn.Module):
                 setattr(self, 'outconv_%i'%i, out)
                 self.outputs_convs.append(out)
 
-    def forward(self, ten):
+    def forward(self, ten, only_last=False):
         ten = self.fc(ten)
         ten = ten.view(len(ten), -1, 8, 8)
         if not self.get_single_levels:
@@ -98,4 +98,7 @@ class Decoder(nn.Module):
             for layer, output in zip(self.progressive_convs, self.outputs_convs):
                 ten = layer(ten)
                 outs.append(output(ten))
-            return outs
+            if only_last:
+                return outs[-1]
+            else:
+                return outs
