@@ -79,9 +79,13 @@ class Decoder(nn.Module):
         else:
             self.progressive_convs = layers_list
             self.outputs_convs = []
-            for layer in self.progressive_convs:
-                self.outputs_convs.append(nn.Sequential(nn.Conv2d(in_channels=layer.channel_out, out_channels=1,
-                                                                  kernel_size=5, stride=1, padding=2), nn.Tanh()))
+            for i, layer in enumerate(self.progressive_convs):
+                setattr(self, 'upconv_%i'%i, layer)
+                out = nn.Sequential(nn.Conv2d(in_channels=layer.channel_out, out_channels=1,
+                                                                  kernel_size=5, stride=1, padding=2), nn.Tanh())
+
+                setattr(self, 'outconv_%i'%i, out)
+                self.outputs_convs.append(out)
 
     def forward(self, ten):
         ten = self.fc(ten)
