@@ -86,26 +86,15 @@ class ProgressiveWAE(AbstractNet):
                     nn.init.constant_(m.bias, 0.0)
 
     def forward(self, ten, only_decode=False, only_last_scale=False):
-        if self.training:
-            # encode
-            ten_encoder = self.encoder(ten)
-            # decode the tensor
-            ten = self.decoder(ten_encoder)
-            # decoder for samples
+        encoding = self.encoder(ten)
+        reconstruct = self.decoder(encoding)
+        if not only_decode:
             if only_last_scale:
-                return ten[-1], ten_encoder
+                return reconstruct[-1], encoding
             else:
-                return ten, ten_encoder
+                return reconstruct, encoding
         else:
-            if not only_decode:
-                encoding = self.encoder(ten)
-                reconstruct = self.decoder(encoding)
-                if only_last_scale:
-                    return reconstruct[-1], encoding
-                else:
-                    return reconstruct, encoding
+            if only_last_scale:
+                return reconstruct[-1]
             else:
-                if only_last_scale:
-                    return self.decoder(ten)[-1]
-                else:
-                    return self.decoder(ten)
+                return reconstruct
