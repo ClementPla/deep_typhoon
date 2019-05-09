@@ -38,7 +38,9 @@ class AbstractRNN(AbstractNet):
         return params
 
     def init_imputation_model(self):
-        self.imputate_model = nn.RNN(self.input_dimensions + 1, self.input_dimensions // self.directional_mult,
+        print(self.input_dimensions)
+        self.imputate_model = nn.RNN(self.input_dimensions + 1,
+                                     self.input_dimensions // self.directional_mult,
                                      num_layers=2,
                                      nonlinearity='relu',
                                      bidirectional=self.bidirectional, batch_first=self.batch_first)
