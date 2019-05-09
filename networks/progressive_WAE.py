@@ -26,7 +26,7 @@ class Encoder(nn.Module):
                                 nn.BatchNorm1d(num_features=1024, momentum=0.9),
                                 nn.ReLU(True),
                                 nn.Linear(in_features=1024, out_features=z_size),
-                                nn.Sigmoid())
+                                nn.Tanh())
 
     def forward(self, ten):
         ten = self.conv(ten)
