@@ -9,7 +9,7 @@ class AbstractRNN(AbstractNet):
         self.config = config
         super(AbstractRNN, self).__init__(checkpoint=self.config.experiment.output_dir,
                                           gpu=self.config.experiment.gpu)
-
+        print("Here", self.config.data.input_dimensions)
         self.input_dimensions = self.config.data.input_dimensions,
         self.hidden_size = self.config.network.hidden_size,
         self.num_layers = self.config.network.num_layers,
