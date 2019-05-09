@@ -47,6 +47,7 @@ class RNNClassifierTrainer():
         data.drop(['sequences', 'indexes'], axis=1, inplace=True)
         if self.config.experiment.task == 'tc_etc':
             data['class'] = data['class'].apply(lambda x: 0 if int(x) != 6 else 1)
+
         elif self.config.experiment.task == 'tc_class':
             data = data[data['class'] != 6]
             data = data[data['class'] != 7]
@@ -67,44 +68,29 @@ class RNNClassifierTrainer():
 
         self.tsd_train = TyphoonSequencesDataset(self.datasets['train'], max_sequences_length,
                                                  columns=['z_space', 'class', 'm', 'l'], column_mask=True)
-
         self.tsd_valid = TyphoonSequencesDataset(self.datasets['validation'], max_sequences_length,
                                                  columns=['z_space', 'class', 'm', 'l'], column_mask=True)
-
         self.tsd_test = TyphoonSequencesDataset(self.datasets['test'], max_sequences_length,
                                                 columns=['z_space', 'class', 'm', 'l'], column_mask=True)
 
     def set_model(self):
-        self.model = LSTMNet(checkpoint=self.config.experiment.output_dir,
-                             input_dimensions=self.config.data.input_dimensions,
-                             hidden_size=self.config.network.hidden_size,
-                             num_layers=self.config.network.num_layers,
-                             gpu=self.config.experiment.gpu,
-                             impute=self.config.model.impute_missing,
-                             nb_output=self.config.data.nb_output,
-                             cell_type=self.config.network.cell_type,
-                             bidirectional=self.config.network.bidirectional,
-                             dropout=self.config.network.dropout,
-                             output_activation=self.config.network.output_activation,
-                             learn_hidden_state=self.config.network.learn_hidden_state,
-                             output_cell=self.config.network.output_cell,
-                             optim_rnn=self.config.model.enable_optimization)
+        self.model = LSTMNet(self.config)
         self.model.cuda(self.config.experiment.gpu)
 
     def train(self):
 
-        groups = [dict(params = self.model.get_prediction_networks_weights(),
+        groups = [dict(params=self.model.prediction_weights,
                        weight_decay=self.config.hp.weight_decay)]
 
         if self.model.hidden_states:
-            groups.append({'params':self.model.hidden_states, 'weight_decay':0})
+            groups.append({'params': self.model.hidden_states, 'weight_decay': 0})
 
         if self.config.model.impute_missing:
-            groups.append({'params':self.model.get_imputation_networks_weights(), 'lr':self.config.hp.imputation_lr})
+            groups.append({'params': self.model.imputation_weights, 'lr': self.config.hp.imputation_lr})
 
         optimizer = optim.Adam(params=groups, lr=self.config.hp.initial_lr,
-                        betas=(self.config.hp.beta1, self.config.hp.beta2),
-                        eps=1e-08)
+                               betas=(self.config.hp.beta1, self.config.hp.beta2),
+                               eps=1e-08)
 
         lr_decayer = ReduceLROnPlateau(optimizer, factor=self.config.hp.decay_lr, verbose=self.config.training.verbose,
                                        patience=self.config.training.lr_patience_decay)
@@ -154,7 +140,7 @@ class RNNClassifierTrainer():
                         recall = conf.recall()
                         precision = conf.precision()
                         accuracy = conf.accuracy()
-                        f1 = 2*(precision*recall)/(precision+recall)
+                        f1 = 2 * (precision * recall) / (precision + recall)
 
                         if self.config.training.verbose:
                             if self.config.experiment.task == 'tc_etc':

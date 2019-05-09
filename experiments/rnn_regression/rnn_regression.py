@@ -52,50 +52,31 @@ class RNNRegressionTrainer():
         self.datasets = split_dataframe(data, test_set_year=self.config.data.test_split_set,
                                         validation_ratio=self.config.data.validation_ratio)
 
-        values, _ = np.histogram(self.datasets['train']['class'], len(np.unique(self.datasets['train']['class'])))
-
-        self.class_weighting = (1 - np.asarray(values) / sum(values)).astype(np.float32)
-
         col = ['z_space', 'pressure']
         if self.config.model.impute_missing:
             col += ['m', 'l']
 
         self.tsd_train = TyphoonSequencesDataset(self.datasets['train'], max_sequences_length,
                                                  columns=col, column_mask=True)
-
         self.tsd_valid = TyphoonSequencesDataset(self.datasets['validation'], max_sequences_length,
                                                  columns=col, column_mask=True)
-
         self.tsd_test = TyphoonSequencesDataset(self.datasets['test'], max_sequences_length,
                                                 columns=col, column_mask=True)
 
     def set_model(self):
-        self.model = LSTMNet(checkpoint=self.config.experiment.output_dir,
-                             input_dimensions=self.config.data.input_dimensions,
-                             hidden_size=self.config.network.hidden_size,
-                             num_layers=self.config.network.num_layers,
-                             gpu=self.config.experiment.gpu,
-                             impute=self.config.model.impute_missing,
-                             nb_output=1,
-                             cell_type=self.config.network.cell_type,
-                             bidirectional=self.config.network.bidirectional,
-                             dropout=self.config.network.dropout,
-                             output_activation='relu',
-                             learn_hidden_state=self.config.network.learn_hidden_state,
-                             output_cell=self.config.network.output_cell)
+        self.model = LSTMNet(self.config)
         self.model.cuda(self.config.experiment.gpu)
 
     def train(self):
 
-        groups = [dict(params=self.model.get_prediction_networks_weights(),
+        groups = [dict(params=self.model.prediction_weights,
                        weight_decay=self.config.hp.weight_decay)]
 
         if self.model.hidden_states:
-            groups.append({'params':self.model.hidden_states, 'weight_decay': 0})
+            groups.append({'params': self.model.hidden_states, 'weight_decay': 0})
 
         if self.config.model.impute_missing:
-            groups.append({'params':self.model.get_imputation_networks_weights(), 'lr':self.config.hp.imputation_lr})
-
+            groups.append({'params': self.model.imputation_weights, 'lr': self.config.hp.imputation_lr})
 
         optimizer = optim.Adam(groups, lr=self.config.hp.initial_lr,
                                betas=(self.config.hp.beta1, self.config.hp.beta2), eps=1e-08,
@@ -148,7 +129,7 @@ class RNNRegressionTrainer():
                         if self.config.training.verbose:
                             self._print("Epoch %i, iteration %s, Training loss %f" % (e + 1, i, float(l.cpu())))
                             self._print(
-                                "Validation: loss %f" %(validation_loss))
+                                "Validation: loss %f" % (validation_loss))
 
                         validation_criteria = validation_loss
 
