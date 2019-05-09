@@ -23,6 +23,7 @@ class AbstractRNN(AbstractNet):
         self.output_cell = self.config.network.output_cell
         self.optim_rnn = self.config.model.enable_optimization
         self.directional_mult = 2 if self.bidirectional else 1
+        self.batch_first = True
 
         if self.impute:
             self.init_imputation_model()
