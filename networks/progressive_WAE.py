@@ -62,13 +62,17 @@ class Discriminator(nn.Module):
 
 
 class ProgressiveWAE(AbstractNet):
-    def __init__(self, channel_in=1, z_size=128, dim_h=128, gpu=1, checkpoint='', upsampling='nearest'):
+    def __init__(self, channel_in=1, z_size=128, dim_h=128, gpu=1, checkpoint='', upsampling='nearest',
+                 gan_latent_space=True):
         super(ProgressiveWAE, self).__init__(gpu=gpu, checkpoint=checkpoint, upsampling=upsampling)
         self.z_size = z_size
+
         self.encoder = Encoder(z_size=self.z_size, channel_in=channel_in)
         self.decoder = Decoder(z_size=self.z_size, size=self.encoder.size, upsampling=upsampling,
                                get_single_levels=True)
-        self.discriminator = Discriminator(channel_in, dim_h=dim_h, dim_z=z_size)
+
+        if gan_latent_space:
+            self.discriminator = Discriminator(channel_in, dim_h=dim_h, dim_z=z_size)
         self.init_parameters()
 
     def init_parameters(self):
