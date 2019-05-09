@@ -20,7 +20,7 @@ class AbstractRNN(AbstractNet):
         self.dropout = self.config.network.dropout
         self.output_activation = self.config.network.output_activation
         self.learn_hidden_state = self.config.network.learn_hidden_state
-        self.output_cell = self.config.network.output_cell
+        self.output_cell_type = self.config.network.output_cell
         self.optim_rnn = self.config.model.enable_optimization
         self.directional_mult = 2 if self.bidirectional else 1
         self.batch_first = True
