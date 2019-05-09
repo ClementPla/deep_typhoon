@@ -9,19 +9,18 @@ class AbstractRNN(AbstractNet):
         self.config = config
         super(AbstractRNN, self).__init__(checkpoint=self.config.experiment.output_dir,
                                           gpu=self.config.experiment.gpu)
-        print("Here", self.config.data.input_dimensions)
-        self.input_dimensions = self.config.data.input_dimensions,
-        self.hidden_size = self.config.network.hidden_size,
-        self.num_layers = self.config.network.num_layers,
-        self.gpu = self.config.experiment.gpu,
-        self.impute = self.config.model.impute_missing,
-        self.nb_output = self.config.data.nb_output,
-        self.cell_type = self.config.network.cell_type,
-        self.bidirectional = self.config.network.bidirectional,
-        self.dropout = self.config.network.dropout,
-        self.output_activation = self.config.network.output_activation,
-        self.learn_hidden_state = self.config.network.learn_hidden_state,
-        self.output_cell = self.config.network.output_cell,
+        self.input_dimensions = self.config.data.input_dimensions
+        self.hidden_size = self.config.network.hidden_size
+        self.num_layers = self.config.network.num_layers
+        self.gpu = self.config.experiment.gpu
+        self.impute = self.config.model.impute_missing
+        self.nb_output = self.config.data.nb_output
+        self.cell_type = self.config.network.cell_type
+        self.bidirectional = self.config.network.bidirectional
+        self.dropout = self.config.network.dropout
+        self.output_activation = self.config.network.output_activation
+        self.learn_hidden_state = self.config.network.learn_hidden_state
+        self.output_cell = self.config.network.output_cell
         self.optim_rnn = self.config.model.enable_optimization
         self.directional_mult = 2 if self.bidirectional else 1
 
@@ -38,7 +37,6 @@ class AbstractRNN(AbstractNet):
         return params
 
     def init_imputation_model(self):
-        print(self.input_dimensions)
         self.imputate_model = nn.RNN(self.input_dimensions + 1,
                                      self.input_dimensions // self.directional_mult,
                                      num_layers=2,
