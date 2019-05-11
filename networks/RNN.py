@@ -25,6 +25,7 @@ class AbstractRNN(AbstractNet):
         self.directional_mult = 2 if self.bidirectional else 1
         self.batch_first = True
 
+
         if self.impute:
             self.init_imputation_model()
 
@@ -41,7 +42,7 @@ class AbstractRNN(AbstractNet):
         self.imputate_model = nn.RNN(self.input_dimensions + 1,
                                      self.input_dimensions // self.directional_mult,
                                      num_layers=2,
-                                     nonlinearity='relu',
+                                     nonlinearity=self.config.data.imputation_activation,
                                      bidirectional=self.bidirectional, batch_first=self.batch_first)
 
         if self.learn_hidden_state:
