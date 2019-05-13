@@ -24,8 +24,7 @@ class AbstractRNN(AbstractNet):
         self.batch_first = True
         self.hidden_dimension = self.directional_mult * self.hidden_size
 
-        if self.num_layers == 1:
-            self.dropout = 0
+
 
         if self.impute:
             self.init_imputation_model()
@@ -127,6 +126,10 @@ class AbstractRNN(AbstractNet):
 class LSTMNet(AbstractRNN):
     def __init__(self, config):
         super(LSTMNet, self).__init__(config)
+
+
+        if self.config.network.num_layers == 1:
+            self.dropout = 0
 
         self.create_model(self.config.network, self.input_dimensions, self.config.data.nb_output)
 
