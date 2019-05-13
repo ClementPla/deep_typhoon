@@ -16,8 +16,8 @@ class AbstractRNN(AbstractNet):
         self.cell_type = self.config.network.cell_type
         self.bidirectional = self.config.model.bidirectional
         self.dropout = self.config.model.dropout
-        self.learn_hidden_state = self.config.network.learn_hidden_state
-        self.output_cell_type = self.config.network.output_cell
+        self.learn_hidden_state = self.config.model.learn_hidden_state
+        self.output_cell_type = self.config.model.output_cell
         self.optim_rnn = self.config.model.enable_optimization
         self.directional_mult = 2 if self.bidirectional else 1
         self.batch_first = True
@@ -113,16 +113,16 @@ class AbstractRNN(AbstractNet):
         setattr(self, name + 'inner_model', inner_model)
 
         if output_size is not None:
-            if config.output_cell_type.lower() == 'fc':
+            if self.output_cell_type.lower() == 'fc':
                 output_cell = nn.Linear(config.hidden_size * self.directional_mult, output_size)
-            elif config.output_cell_type.lower() == 'rnn':
+            elif self.output_cell_type.lower() == 'rnn':
                 output_cell = nn.RNN(config.hidden_size * self.directional_mult,
                                      output_size,
                                      batch_first=True,
                                      nonlinearity=config.output_activation)
             else:
                 raise ValueError("Unexpected value for output cell %s (expected RNN or FC got %s)" % (name,
-                                                                                                      config.output_cell_type))
+                                                                                                      self.output_cell_type))
             setattr(self, name + 'output_cell', output_cell)
 
 
