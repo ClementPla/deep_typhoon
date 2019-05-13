@@ -257,8 +257,7 @@ class RNNClassifierTrainer():
         full_loss = full_loss / full_gt.shape[0]
         if get_prob:
             def softmax(x):
-                alpha = 1
-                return np.exp(alpha * x) / np.expand_dims(np.sum(np.exp(alpha * x), axis=1), 1)
+                return np.exp(x) / np.expand_dims(np.sum(np.exp(x), axis=1), 1)
 
             full_prob = np.vstack(full_prob)
             if use_uncertain:
