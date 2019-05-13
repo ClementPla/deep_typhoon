@@ -16,7 +16,6 @@ class AbstractRNN(AbstractNet):
         self.cell_type = self.config.network.cell_type
         self.bidirectional = self.config.model.bidirectional
         self.dropout = self.config.model.dropout
-        self.output_activation = self.config.network.output_activation
         self.learn_hidden_state = self.config.network.learn_hidden_state
         self.output_cell_type = self.config.network.output_cell
         self.optim_rnn = self.config.model.enable_optimization
@@ -95,8 +94,12 @@ class AbstractRNN(AbstractNet):
             model = nn.RNN
         elif config.cell_type.lower() == 'gru':
             model = nn.GRU
+            if 'nonlinearity' in config:
+                del config['nonlinearity']
         elif config.cell_type.lower() == 'lstm':
             model = nn.LSTM
+            if 'nonlinearity' in config:
+                del config['nonlinearity']
         else:
             raise ValueError("Unexpected value for inner model %s (expected GRU, LSTM or RNN, got %s)" % (name,
                                                                                                           config.cell_type))

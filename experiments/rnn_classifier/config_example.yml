@@ -1,46 +1,51 @@
 experiment:
-    output_dir : '/home/clement/code/src/rnn_classifier/tuning/'
+    output_dir : 'AEGan/'
     gpu : 0
     seed : 1234
-    task: 'tc_class' # Or 'tc_etc'
-
+    task : 'tc_etc' # Or 'tc_etc'
 data:
     db_path : '/home/clement/database/'
-    input_file : 'AE_dataset.pkl'
+    input_file : 'ProgressiveWAE_dataset.pkl'
     test_split_set : 2013
     validation_ratio : 0.2
     input_dimensions : 256
     nb_output : 2
+    imputation_activation : 'tanh' # or relu
 
 hp:
     n_epochs : 100
-    initial_lr : 0.0001
+    initial_lr : 0.001
+    imputation_lr : 0.0001
     decay_lr : 0.5
-    batch_size : 32
+    batch_size : 64
     beta1 : 0.9
     beta2 : 0.999
     weight_decay : 0.0001
-    
-    
+
+
 model:
     impute_missing : True
     enable_optimization : True
+    dropout : 0.5
+    bidirectional : True
+    learn_hidden_state : False
+    output_cell : 'rnn'
+
 
 network:
-    cell_type : 'gru'
+    cell_type : 'lstm'
     hidden_size : 128
-    bidirectional : True
     num_layers : 2
-    dropout : 0.5
+    nonlinearity : 'tanh' # or tanh
 
 training:
-    validation_freq : 16
-    lr_patience_decay : 25
-    verbose : False
+    validation_freq : 8
+    lr_patience_decay : 10
+    verbose : True
     html_disp : 15
     save_in_timestamp_folder : False
-    save_on_validation : 'loss' # Can be 'accuracy', 'f1', 'loss'
+    save_on_validation : 'f1' # Can be 'accuracy', 'f1', 'loss'
 
 testing:
-    use_uncertain:True
+    use_uncertain : True
     
