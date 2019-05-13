@@ -119,7 +119,7 @@ class AbstractRNN(AbstractNet):
                 output_cell = nn.RNN(config.hidden_size * self.directional_mult,
                                      output_size,
                                      batch_first=True,
-                                     nonlinearity=config.output_activation)
+                                     nonlinearity=self.config.model.output_activation)
             else:
                 raise ValueError("Unexpected value for output cell %s (expected RNN or FC got %s)" % (name,
                                                                                                       self.output_cell_type))
