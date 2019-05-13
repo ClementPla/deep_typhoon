@@ -2,6 +2,20 @@ import numpy as np
 from torch.utils.data import Dataset
 
 
+def avance_time(df, column, delay):
+    sequences = np.unique(df.index.get_level_values(0))
+    for seq in sequences:
+        df_seq = df.loc[seq]
+        df_seq.loc[(seq, column)] = np.roll(df_seq.loc[column], -delay)
+        seq_length = len(df.loc[seq])
+        indexes = np.arange(0, seq_length)[::-1]
+        df.loc[(seq, 'temp_index')] = indexes  # Create temporary indexes to indicate which values to delete
+    df = df.set_index('temp_index', append=True)
+    df.drop(np.arange(0, delay), level=2, inplace=True)  # Drop those values
+    df = df.reset_index(level=2, drop=True)  # Remove temporary indexes
+    return df
+
+
 def split_dataframe(df, test_set_year=2011, validation_ratio=0.2, seed=1234):
     """
     Splits the dataframe in training, validation and test set. The test set is defined by a year (all sequences coming

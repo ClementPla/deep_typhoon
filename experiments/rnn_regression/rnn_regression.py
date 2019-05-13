@@ -49,6 +49,8 @@ class RNNRegressionTrainer():
         # Get the size of the longest sequence
         max_sequences_length = get_sequence_max_length(data)
         data = data.astype({"m": np.float32, "l": np.float32})
+        if self.config.experiment.prediction_avance:
+            data = avance_time(data, 'pressure', self.config.experiment.prediction_avance)
         self.datasets = split_dataframe(data, test_set_year=self.config.data.test_split_set,
                                         validation_ratio=self.config.data.validation_ratio)
 

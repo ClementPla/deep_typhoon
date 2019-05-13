@@ -90,6 +90,7 @@ class AbstractRNN(AbstractNet):
         return x * m + (1 - m) * x_predicted
 
     def create_model(self, config, input_size, output_size=None, name=''):
+        config = config.copy()
         if config.cell_type.lower() == 'rnn':
             model = nn.RNN
         elif config.cell_type.lower() == 'gru':
