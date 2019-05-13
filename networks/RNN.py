@@ -140,11 +140,11 @@ class LSTMNet(AbstractRNN):
             self.init_trainable_init_state()
 
     def init_trainable_init_state(self):
-        self.h0_i = nn.Parameter(torch.zeros(self.num_layers * self.directional_mult, 1, self.hidden_size))
+        self.h0_i = nn.Parameter(torch.zeros(self.config.network.num_layers * self.directional_mult, 1, self.config.network.hidden_size))
         if self.cell_type == 'lstm':
-            self.c0_i = nn.Parameter(torch.zeros(self.num_layers * self.directional_mult, 1, self.hidden_size))
+            self.c0_i = nn.Parameter(torch.zeros(self.config.network.num_layers * self.directional_mult, 1, self.config.network.hidden_size))
         if self.output_cell_type == 'rnn':
-            self.h0_o = nn.Parameter(torch.zeros(1, 1, self.nb_output))
+            self.h0_o = nn.Parameter(torch.zeros(1, 1, self.config.data.nb_output))
 
     def forward(self, x, seqs_size):
         b = x.size(0)
