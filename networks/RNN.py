@@ -89,8 +89,8 @@ class AbstractRNN(AbstractNet):
             x_predicted = self.imputate_model(input_imputation)[0]
         return x * m + (1 - m) * x_predicted
 
-    def create_model(self, config, input_size, output_size=None, name=''):
-        config = config.copy()
+    def create_model(self, conf, input_size, output_size=None, name=''):
+        config = conf.copy()
         if config.cell_type.lower() == 'rnn':
             model = nn.RNN
         elif config.cell_type.lower() == 'gru':

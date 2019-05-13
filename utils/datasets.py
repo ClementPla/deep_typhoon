@@ -6,8 +6,8 @@ def avance_time(df, column, delay):
     sequences = np.unique(df.index.get_level_values(0))
     for seq in sequences:
         df_seq = df.loc[seq]
-        df_seq.loc[(seq, column)] = np.roll(df_seq.loc[column], -delay)
-        seq_length = len(df.loc[seq])
+        df.loc[(seq, column)] = np.roll(df_seq.loc[column], -delay)
+        seq_length = len(df_seq)
         indexes = np.arange(0, seq_length)[::-1]
         df.loc[(seq, 'temp_index')] = indexes  # Create temporary indexes to indicate which values to delete
     df = df.set_index('temp_index', append=True)
