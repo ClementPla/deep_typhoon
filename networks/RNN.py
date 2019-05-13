@@ -100,7 +100,7 @@ class AbstractRNN(AbstractNet):
         else:
             raise ValueError("Unexpected value for inner model %s (expected GRU, LSTM or RNN, got %s)" % (name,
                                                                                                           config.cell_type))
-
+        del config['cell_type']
         inner_model = model(input_size,
                             batch_first=self.batch_first,
                             dropout=self.dropout,
