@@ -3,6 +3,7 @@ experiment:
     gpu : 0
     seed : 1234
     task: 'tc_class' # Or 'tc_etc'
+
 data:
     db_path : '/home/clement/database/'
     input_file : 'AE_dataset.pkl'
@@ -24,6 +25,7 @@ hp:
 model:
     impute_missing : True
     enable_optimization : True
+
 network:
     cell_type : 'gru'
     hidden_size : 128
