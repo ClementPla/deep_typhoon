@@ -2,6 +2,7 @@ from .abstract_network import AbstractNet
 from torch import nn
 import torch
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
+from easydict import EasyDict
 
 
 class AbstractRNN(AbstractNet):
@@ -90,7 +91,7 @@ class AbstractRNN(AbstractNet):
         return x * m + (1 - m) * x_predicted
 
     def create_model(self, conf, input_size, output_size=None, name=''):
-        config = conf.copy()
+        config = EasyDict(conf.copy())
         if config.cell_type.lower() == 'rnn':
             model = nn.RNN
         elif config.cell_type.lower() == 'gru':
