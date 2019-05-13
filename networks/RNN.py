@@ -14,8 +14,8 @@ class AbstractRNN(AbstractNet):
         self.gpu = self.config.experiment.gpu
         self.impute = self.config.model.impute_missing
         self.cell_type = self.config.network.cell_type
-        self.bidirectional = self.config.network.bidirectional
-        self.dropout = self.config.network.dropout
+        self.bidirectional = self.config.model.bidirectional
+        self.dropout = self.config.model.dropout
         self.output_activation = self.config.network.output_activation
         self.learn_hidden_state = self.config.network.learn_hidden_state
         self.output_cell_type = self.config.network.output_cell
