@@ -32,7 +32,7 @@ class AbstractRNN(AbstractNet):
     @property
     def hidden_states(self):
         params = []
-        all_attrs = vars(self)
+        all_attrs = self._parameters
         for attr in all_attrs:
             if attr.startswith('h0') or attr.startswith('c0'):
                 params.append(all_attrs[attr])

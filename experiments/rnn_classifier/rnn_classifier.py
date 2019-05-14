@@ -38,6 +38,7 @@ class RNNClassifierTrainer():
         torch.backends.cudnn.benchmark = False
         torch.manual_seed(seed)
         torch.cuda.manual_seed_all(seed)
+
     def set_data(self):
         DB_PATH = self.config.data.db_path
         DATA_PATH = path.join(DB_PATH, self.config.data.input_file)
