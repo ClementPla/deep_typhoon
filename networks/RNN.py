@@ -14,7 +14,6 @@ class AbstractRNN(AbstractNet):
         self.hidden_size = self.config.network.hidden_size
         self.gpu = self.config.experiment.gpu
         self.impute = self.config.model.impute_missing
-        self.cell_type = self.config.network.cell_type
         self.bidirectional = self.config.model.bidirectional
         self.dropout = self.config.model.dropout
         self.learn_hidden_state = self.config.model.learn_hidden_state
@@ -23,8 +22,6 @@ class AbstractRNN(AbstractNet):
         self.directional_mult = 2 if self.bidirectional else 1
         self.batch_first = True
         self.hidden_dimension = self.directional_mult * self.hidden_size
-
-
 
         if self.impute:
             self.init_imputation_model()
@@ -91,20 +88,25 @@ class AbstractRNN(AbstractNet):
         return x * m + (1 - m) * x_predicted
 
     def create_model(self, conf, input_size, output_size=None, name=''):
+        if name:
+            name = '_'+name
+
         config = EasyDict(conf.copy())
-        if config.cell_type.lower() == 'rnn':
-            model = nn.RNN
-        elif config.cell_type.lower() == 'gru':
-            model = nn.GRU
-            if 'nonlinearity' in config:
-                del config['nonlinearity']
-        elif config.cell_type.lower() == 'lstm':
-            model = nn.LSTM
-            if 'nonlinearity' in config:
-                del config['nonlinearity']
+        models = {'rnn':nn.RNN, 'gru':nn.GRU, 'lstm':nn.LSTM}
+        if config.cell_type.lower() in models:
+            model = models[config.cell_type.lower()]
         else:
             raise ValueError("Unexpected value for inner model %s (expected GRU, LSTM or RNN, got %s)" % (name,
                                                                                                           config.cell_type))
+
+        if config.cell_type.lower() in ['gru', 'lstm']:
+            if 'nonlinearity' in config:
+                del config['nonlinearity']
+
+        self.create_hidden_variable('h0_i'+name, config.num_layers*self.bidirectional, config.hidden_size)
+        if config.cell_type.lower() == 'lstm':
+            self.create_hidden_variable('c0_i'+name, config.num_layers*self.bidirectional, config.hidden_size)
+
         del config['cell_type']
         inner_model = model(input_size,
                             batch_first=self.batch_first,
@@ -122,31 +124,28 @@ class AbstractRNN(AbstractNet):
                                      output_size,
                                      batch_first=True,
                                      nonlinearity=self.config.model.output_activation)
+
+                self.create_hidden_variable('h0_o' + name, 1, output_size)
+
             else:
                 raise ValueError("Unexpected value for output cell %s (expected RNN or FC got %s)" % (name,
                                                                                                       self.output_cell_type))
             setattr(self, name + 'output_cell', output_cell)
+
+    def create_hidden_variable(self, name, num_layers, hidden_size):
+        if self.learn_hidden_state:
+            param = nn.Parameter(torch.zeros(num_layers, 1, hidden_size))
+            setattr(self, name, param)
 
 
 class LSTMNet(AbstractRNN):
     def __init__(self, config):
         super(LSTMNet, self).__init__(config)
 
-
         if self.config.network.num_layers == 1:
             self.dropout = 0
 
         self.create_model(self.config.network, self.input_dimensions, self.config.data.nb_output)
-
-        if self.learn_hidden_state:
-            self.init_trainable_init_state()
-
-    def init_trainable_init_state(self):
-        self.h0_i = nn.Parameter(torch.zeros(self.config.network.num_layers * self.directional_mult, 1, self.config.network.hidden_size))
-        if self.cell_type == 'lstm':
-            self.c0_i = nn.Parameter(torch.zeros(self.config.network.num_layers * self.directional_mult, 1, self.config.network.hidden_size))
-        if self.output_cell_type == 'rnn':
-            self.h0_o = nn.Parameter(torch.zeros(1, 1, self.config.data.nb_output))
 
     def forward(self, x, seqs_size):
         b = x.size(0)

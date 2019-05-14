@@ -85,7 +85,8 @@ class VisuResultsClassification:
                  graph=None,
                  fill=None,
                  interval=50,
-                 figsize=(14, 12)):
+                 figsize=(14, 12),
+                 sequences_titles=None):
         """
         Sequence
         :param x:
@@ -100,25 +101,11 @@ class VisuResultsClassification:
         assert (bar is None and graph is None and fill is None,
                 "You have to provide at least one of the following argument: bar, graph, fill")
 
-        if bar is None:
-            bar = []
-        elif not isinstance(bar, list):
-            bar = [bar]
-
-        if graph is None:
-            graph = []
-        elif not isinstance(graph, list):
-            graph = [graph]
-
-        if sequences is None:
-            sequences = []
-        elif not isinstance(sequences, list):
-            sequences = [sequences]
-
-        if fill is None:
-            fill = []
-        elif not isinstance(fill, list):
-            fill = [fill]
+        bar = self.init_arg(bar)
+        graph = self.init_arg(graph)
+        sequences = self.init_arg(sequences)
+        sequences_titles = self.init_arg(sequences_titles)
+        fill = self.init_arg(fill)
 
         self.x = x
         self.length = len(x)
@@ -141,6 +128,9 @@ class VisuResultsClassification:
             self.image_plts.append(self.array_axs[-1].imshow(seq[0], cmap='gray'))
             iter_subplot += 1
             plt.axis('off')
+
+        for j, title in enumerate(sequences_titles):
+            self.array_axs[j].title.set_text(title)
 
         # Curves
         self.graph_axs = []
@@ -197,6 +187,13 @@ class VisuResultsClassification:
         self.anim = animation.FuncAnimation(self.fig, self._animate,
                                             frames=np.arange(self.length),
                                             interval=interval)
+
+    def init_arg(self, arg):
+        if arg is None:
+            arg = []
+        elif not isinstance(arg, list):
+            arg = [arg]
+        return arg
 
     def pad_missing_value(self, array):
         missing_value = max(0, self.length-len(array))
