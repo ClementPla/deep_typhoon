@@ -13,6 +13,20 @@ def get_most_recent_file(dirpath):
     return files[-1]
 
 
+def load_sequence(sequence, root_folder='home/datasets/typhoon/wnp/image/'):
+    import h5py
+    folder = os.path.join(root_folder, sequence+'/')
+    files = os.listdir(folder)
+    array = []
+    for f in files:
+        file = h5py.File(os.path.join(folder, f), 'r')
+        img = file['infrared'][()]
+        img -= img.min()
+        eps = 1e-7
+        array.append(2 * (img / (np.max(img) + eps)).astype(np.float32) - 1)
+    return np.asarray(array)
+
+
 def save_numpy(arr, path):
     create_folder(path)
     np.save(path, arr)
