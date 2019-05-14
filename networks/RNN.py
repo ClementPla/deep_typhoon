@@ -153,7 +153,7 @@ class LSTMNet(AbstractRNN):
             x = pack_padded_sequence(x, seqs_size, batch_first=self.batch_first, enforce_sorted=False)
 
         if self.learn_hidden_state:
-            if self.cell_type == 'lstm':
+            if self.config.network.cell_type == 'lstm':
                 lstm_out, _ = self.inner_model(x, (self.h0_i.repeat(1, b, 1), self.c0_i.repeat(1, b, 1)))
             else:
                 lstm_out, _ = self.inner_model(x, self.h0_i.repeat(1, b, 1))
