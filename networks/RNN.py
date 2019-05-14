@@ -103,9 +103,9 @@ class AbstractRNN(AbstractNet):
             if 'nonlinearity' in config:
                 del config['nonlinearity']
 
-        self.create_hidden_variable('h0_i'+name, config.num_layers*self.bidirectional, config.hidden_size)
+        self.create_hidden_variable('h0_i'+name, config.num_layers*self.directional_mult, config.hidden_size)
         if config.cell_type.lower() == 'lstm':
-            self.create_hidden_variable('c0_i'+name, config.num_layers*self.bidirectional, config.hidden_size)
+            self.create_hidden_variable('c0_i'+name, config.num_layers*self.directional_mult, config.hidden_size)
 
         del config['cell_type']
         inner_model = model(input_size,
