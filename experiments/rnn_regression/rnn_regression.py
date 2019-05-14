@@ -1,7 +1,7 @@
 import pandas as pd
 import sys
-from IPython import display
 import random
+import warnings
 
 from torch import nn, optim
 import torch
@@ -50,6 +50,8 @@ class RNNRegressionTrainer():
         max_sequences_length = get_sequence_max_length(data)
         data = data.astype({"m": np.float32, "l": np.float32})
         if self.config.experiment.prediction_avance:
+            if self.config.model.bidirectional:
+                warnings.warn('For predicting value, you should not use bidirectional models!')
             data = avance_time(data, 'pressure', self.config.experiment.prediction_avance)
         self.datasets = split_dataframe(data, test_set_year=self.config.data.test_split_set,
                                         validation_ratio=self.config.data.validation_ratio)
