@@ -51,8 +51,8 @@ class AbstractRNN(AbstractNet):
 
     @property
     def prediction_weights(self):
-        alls = list(self.inner_model.parameters()) + list(self.output_cell.parameters())
-        for hc in self.hidden_states:
+        alls = list(self.parameters())
+        for hc in self.hidden_states+self.imputation_weights:
             try:
                 alls.remove(hc)
             except (ValueError, RuntimeError) as e:
