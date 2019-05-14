@@ -123,9 +123,10 @@ class AbstractRNN(AbstractNet):
                 output_cell = nn.RNN(config.hidden_size * self.directional_mult,
                                      output_size,
                                      batch_first=True,
+                                     bidirectional=self.bidirectional,
                                      nonlinearity=self.config.model.output_activation)
 
-                self.create_hidden_variable('h0_o' + name, 1, output_size)
+                self.create_hidden_variable('h0_o' + name, 1*self.directional_mult, output_size)
 
             else:
                 raise ValueError("Unexpected value for output cell %s (expected RNN or FC got %s)" % (name,
