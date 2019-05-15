@@ -227,7 +227,11 @@ class RNNRegressionTrainer():
                                  shuffle=False, pin_memory=False)
 
         self.model.load(self.config.experiment.output_dir, load_most_recent=True)
-        pred, gt, loss, std = self.test(self.model, test_loader, use_uncertain)
+        if use_uncertain:
+            pred, gt, loss, std = self.test(self.model, test_loader, use_uncertain)
+        else:
+            pred, gt, loss = self.test(self.model, test_loader, use_uncertain)
+            
         self._print("Test: loss %f" % loss)
 
         return loss, pred, std
