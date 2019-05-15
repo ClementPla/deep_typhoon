@@ -13,7 +13,7 @@ def get_most_recent_file(dirpath):
     return files[-1]
 
 
-def load_sequence(sequence, root_folder='home/datasets/typhoon/wnp/image/'):
+def load_sequence(sequence, root_folder='/home/datasets/typhoon/wnp/image/'):
     import h5py
     folder = os.path.join(root_folder, sequence+'/')
     files = os.listdir(folder)
