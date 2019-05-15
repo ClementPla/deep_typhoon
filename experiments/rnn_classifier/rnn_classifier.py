@@ -48,9 +48,9 @@ class RNNClassifierTrainer():
             if self.config.model.bidirectional:
                 warnings.warn('For predicting value, you should not use bidirectional models!')
             data = avance_time(data, 'class', self.config.experiment.prediction_avance)
+
         if self.config.experiment.task == 'tc_etc':
             data['class'] = data['class'].apply(lambda x: 0 if int(x) != 6 else 1)
-
         elif self.config.experiment.task == 'tc_class':
             data = data[data['class'] != 6]
             data = data[data['class'] != 7]

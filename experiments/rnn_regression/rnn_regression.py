@@ -188,7 +188,7 @@ class RNNRegressionTrainer():
 
                     outs = torch.cat(outs).view(n_iter, *size)
                     output = torch.mean(outs, dim=0)
-                    std_out = torch.std(outs, dim=0)
+                    std_out = torch.std(outs, dim=0).cpu().numpy()
 
                 else:
                     output = model(x, seqs_size)
@@ -199,9 +199,6 @@ class RNNRegressionTrainer():
 
                 pred = masked_output.cpu().numpy()
 
-                if use_uncertain:
-                    std_out = std_out.cpu().numpy()
-
                 y = y.cpu().numpy()
                 seqs_size = seqs_size.cpu().numpy()
                 for i, length in enumerate(seqs_size):
@@ -211,11 +208,13 @@ class RNNRegressionTrainer():
                     full_pred.append(pred_sample.flatten())
                     full_loss.append(l[i, :length])
                     if use_uncertain:
-                        full_std.append(std_out[i, :length])
+                        full_std.append(std_out[i, :length].flatten())
 
         full_pred = np.hstack(full_pred)
         full_gt = np.hstack(full_gt)
         full_loss = np.mean(np.hstack(full_loss))
+        if use_uncertain:
+            full_std = np.hstack(full_std)
 
         if use_uncertain:
             return full_pred, full_gt, full_loss, full_std
