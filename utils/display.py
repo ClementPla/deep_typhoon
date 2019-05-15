@@ -86,7 +86,9 @@ class VisuResultsClassification:
                  fill=None,
                  interval=50,
                  figsize=(14, 12),
-                 sequences_titles=None):
+                 sequences_titles=None,
+                 graph_titles=None,
+                 fill_titles=None):
         """
         Sequence
         :param x:
@@ -149,6 +151,9 @@ class VisuResultsClassification:
             self.graph_vertical_lines.append(graph_ax.axvline(x=self.x[0], color='k', linestyle=':'))
             self.graph_axs.append(graph_ax)
 
+        for j, title in enumerate(graph_titles):
+            self.graph_axs[j].title.set_text(title)
+
         self.fill_axs = []
         self.fill_vertical_lines = []
         for arrays in fill:
@@ -174,6 +179,9 @@ class VisuResultsClassification:
             self.fill_vertical_lines.append(fill_ax.axvline(x=self.x[0], color='k', linestyle=':'))
             self.fill_axs.append(fill_ax)
             iter_subplot += 1
+        
+        for j, title in enumerate(fill_titles):
+            self.fill_axs[j].title.set_text(title)
 
         # bar
         self.bars = bar
