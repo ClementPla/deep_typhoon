@@ -231,7 +231,9 @@ class RNNRegressionTrainer():
             pred, gt, loss, std = self.test(self.model, test_loader, use_uncertain)
         else:
             pred, gt, loss = self.test(self.model, test_loader, use_uncertain)
-            
-        self._print("Test: loss %f" % loss)
 
-        return loss, pred, std
+        self._print("Test: loss %f" % loss)
+        if use_uncertain:
+            return loss, pred, std
+        else:
+            return loss, pred
