@@ -108,6 +108,9 @@ class VisuResultsClassification:
         sequences = self.init_arg(sequences)
         sequences_titles = self.init_arg(sequences_titles)
         fill = self.init_arg(fill)
+        graph_titles = self.init_arg(graph_titles)
+        fill_titles = self.init_arg(fill_titles)
+
 
         self.x = x
         self.length = len(x)
@@ -179,7 +182,7 @@ class VisuResultsClassification:
             self.fill_vertical_lines.append(fill_ax.axvline(x=self.x[0], color='k', linestyle=':'))
             self.fill_axs.append(fill_ax)
             iter_subplot += 1
-        
+
         for j, title in enumerate(fill_titles):
             self.fill_axs[j].title.set_text(title)
 
