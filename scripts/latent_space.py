@@ -47,6 +47,49 @@ def reverse_z(netG, goal, z_size=None, cuda=None, clip='disabled', lr=0.001, nit
 
     return z_approx
 
+def reverse_rnn_z(rnn, goal, cuda=None, clip='disabled', lr=0.001, niter=500,
+                  initial_z=None,
+                  loss=nn.CrossEntropyLoss, **kwargs):
+    # sanity check
+    assert clip in ['disabled', 'standard', 'stochastic']
+    print("Optimizing z with %i iterations"%niter)
+
+    # loss metrics
+    mse_loss = loss()
+
+    z_approx = initial_z
+
+    # transfer to gpu
+    mse_loss.cuda(cuda)
+
+    # convert to variable
+    z_approx = Variable(z_approx)
+    z_approx.requires_grad = True
+
+    # optimizer
+    optimizer_approx = optim.Adam([z_approx], lr=lr)
+
+    # train
+    for i in range(niter):
+        g_z_approx = rnn(z_approx)
+        g_z_approx = g_z_approx.view(-1, g_z_approx.size()[-1])
+        mse_g_z = mse_loss(g_z_approx, torch.flatten(goal))
+
+        # bprop
+        optimizer_approx.zero_grad()
+        mse_g_z.backward()
+        optimizer_approx.step()
+
+        # clipping
+        if clip == 'standard':
+            z_approx.data[z_approx.data > 1] = 1
+            z_approx.data[z_approx.data < -1] = -1
+        if clip == 'stochastic':
+            z_approx.data[z_approx.data > 1] = random.uniform(-1, 1)
+            z_approx.data[z_approx.data < -1] = random.uniform(-1, 1)
+
+    return z_approx
+
 
 def get_angle(z1, z2):
     z1 = z1.flatten()
