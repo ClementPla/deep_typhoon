@@ -183,10 +183,13 @@ class RNNMultiTaskTrainer():
                 input_train = init_cuda_sequences_batch(valid_batch[:-1], max_batch_length, self.config.experiment.gpu)
                 mask_seq = input_train[-1]
                 x = input_train[0]
-                y = input_train[1]
+                y_pressure = input_train[1]  # pressure
+                y_tcXetc = input_train[2]  # tcXetc
+                y_Class = input_train[3]  # tcClass
+
                 if self.config.model.impute_missing:
-                    m = input_train[2]
-                    l = input_train[3]
+                    m = input_train[4]
+                    l = input_train[5]
                     x = model.imputation(x, m, l)
 
                 if use_uncertain:

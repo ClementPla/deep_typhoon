@@ -10,6 +10,7 @@ class AbstractRNN(AbstractNet):
         self.config = config
         super(AbstractRNN, self).__init__(checkpoint=self.config.experiment.output_dir,
                                           gpu=self.config.experiment.gpu)
+
         self.input_dimensions = self.config.data.input_dimensions
         self.hidden_size = self.config.network.hidden_size
         self.gpu = self.config.experiment.gpu
@@ -188,20 +189,9 @@ class MultiTaskRNNet(AbstractRNN):
     def __init__(self, config):
         super(MultiTaskRNNet, self).__init__(config)
 
-
-        if self.cell_type == 'lstm':
-            self.inner_model = nn.LSTM(self.input_dimensions,
-                                       self.hidden_size,
-                                       dropout=self.dropout,
-                                       num_layers=self.num_layers,
-                                       batch_first=self.batch_first,
-                                       bidirectional=self.bidirectional)
-
         ## Shared model
         self.create_model(self.config.network, self.input_dimensions, self.hidden_size)
-
         self.hidden_dimension = self.directional_mult * self.hidden_size
-
         self.create_model(self.config.tcXetc, self.hidden_dimension, 2, 'tcXetc')
         self.create_model(self.config.tcClass, self.hidden_dimension, 4, 'tcClass')
         self.create_model(self.config.centrallPressure, self.hidden_dimension, 1, 'centralPressure')
