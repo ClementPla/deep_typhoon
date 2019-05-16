@@ -5,7 +5,7 @@ import random
 import torch
 
 
-def reverse_z(netG, goal, z_size, cuda, clip='disabled', lr=0.001, niter=500, initial_z=None, loss=nn.MSELoss, **kwargs):
+def reverse_z(netG, goal, z_size=None, cuda=None, clip='disabled', lr=0.001, niter=500, initial_z=None, loss=nn.MSELoss, **kwargs):
     # sanity check
     assert clip in ['disabled', 'standard', 'stochastic']
     print("Optimizing z with %i iterations"%niter)
