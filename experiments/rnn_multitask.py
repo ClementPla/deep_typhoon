@@ -75,11 +75,9 @@ class RNNMultiTaskTrainer():
         self.tsd_test = TyphoonSequencesDataset(self.datasets['test'], max_sequences_length,
                                                 columns=col, column_mask=True)
 
-
     def set_model(self):
         self.model = MultiTaskRNNet(self.config)
         self.model.cuda(self.config.experiment.gpu)
-
 
     def train(self):
 
@@ -100,6 +98,10 @@ class RNNMultiTaskTrainer():
                                        patience=self.config.training.lr_patience_decay)
 
         MSEloss = nn.L1Loss()
+
+        CElossTCxETC = nn.CrossEntropyLoss(torch.from_numpy(self.class_weighting_tcXetc).cuda(self.config.experiment.gpu))
+        CElossTCClass = nn.CrossEntropyLoss(torch.from_numpy(self.class_weighting_tcClass).cuda(self.config.experiment.gpu))
+
         for e in range(self.config.hp.n_epochs):
             train_loader = DataLoader(self.tsd_train, batch_size=self.config.hp.batch_size, shuffle=True,
                                       pin_memory=False)
@@ -114,24 +116,41 @@ class RNNMultiTaskTrainer():
                                                             self.config.experiment.gpu)
                     mask_seq = input_train[-1]
                     x = input_train[0]
-                    y_pressure = input_train[1] # pressure
-                    y_tcXetc = input_train[2] # tcXetc
-                    y_Class = input_train[3] # tcClass
+                    y_pressure = input_train[1]  # pressure
+                    y_tcXetc = input_train[2]  # tcXetc
+                    y_Class = input_train[3]  # tcClass
 
                     if self.config.model.impute_missing:
                         m = input_train[4]
                         l = input_train[5]
                         x = self.model.imputation(x, m, l)
-                    output = self.model(x, seqs_size)
+                    tcXetc_out, tcClass_out, pressure_out = self.model(x, seqs_size)
 
                     mask_seq = torch.flatten(mask_seq)
-                    y = torch.flatten(y)
-                    output = torch.flatten(output)
+
+                    ### Central Pressure
+                    y_pressure = torch.flatten(y_pressure)
+                    output = torch.flatten(pressure_out)
                     masked_output = mask_seq * output
-                    l = MSEloss(masked_output, y)
+                    l_pressure = MSEloss(masked_output, y_pressure)
+
+                    ### TC vs ETC
+                    output = tcXetc_out.view(-1, tcXetc_out.size(-1))
+                    y_tcXetc = torch.flatten(y_tcXetc)
+                    masked_output = mask_seq * output
+                    l_tcXetc = CElossTCxETC(masked_output, y_tcXetc)
+
+                    ### TC Classification
+                    output = tcClass_out.view(-1, tcClass_out.size(-1))
+                    y_Class = torch.flatten(y_Class)
+                    only_tc = y_Class >= 0
+                    masked_output = only_tc * mask_seq * output
+                    l_tcClass = CElossTCClass(masked_output, only_tc * y_Class)
+
+                    l_total = l_tcXetc + l_pressure + l_tcClass
                     self.model.zero_grad()
                     # encoder
-                    l.backward(retain_graph=True)
+                    l_total.backward(retain_graph=True)
                     optimizer.step()
                     p_epoch.update(1)
 

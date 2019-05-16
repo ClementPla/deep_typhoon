@@ -50,7 +50,7 @@ class AbstractRNN(AbstractNet):
     @property
     def prediction_weights(self):
         alls = list(self.parameters())
-        for hc in self.hidden_states+self.imputation_weights:
+        for hc in self.hidden_states + self.imputation_weights:
             try:
                 alls.remove(hc)
             except (ValueError, RuntimeError) as e:
@@ -90,10 +90,10 @@ class AbstractRNN(AbstractNet):
 
     def create_model(self, conf, input_size, output_size=None, name=''):
         if name:
-            name = '_'+name
+            name = '_' + name
 
         config = EasyDict(conf.copy())
-        models = {'rnn':nn.RNN, 'gru':nn.GRU, 'lstm':nn.LSTM}
+        models = {'rnn': nn.RNN, 'gru': nn.GRU, 'lstm': nn.LSTM}
         if config.cell_type.lower() in models:
             model = models[config.cell_type.lower()]
         else:
@@ -104,9 +104,9 @@ class AbstractRNN(AbstractNet):
             if 'nonlinearity' in config:
                 del config['nonlinearity']
 
-        self.create_hidden_variable('h0_i'+name, config.num_layers*self.directional_mult, config.hidden_size)
+        self.create_hidden_variable('h0_i' + name, config.num_layers * self.directional_mult, config.hidden_size)
         if config.cell_type.lower() == 'lstm':
-            self.create_hidden_variable('c0_i'+name, config.num_layers*self.directional_mult, config.hidden_size)
+            self.create_hidden_variable('c0_i' + name, config.num_layers * self.directional_mult, config.hidden_size)
 
         del config['cell_type']
         inner_model = model(input_size,
@@ -115,7 +115,7 @@ class AbstractRNN(AbstractNet):
                             bidirectional=self.bidirectional,
                             **config)
 
-        setattr(self, name + 'inner_model', inner_model)
+        setattr(self, 'inner_model' + name, inner_model)
 
         if output_size is not None:
             if self.output_cell_type.lower() == 'fc':
@@ -131,7 +131,7 @@ class AbstractRNN(AbstractNet):
             else:
                 raise ValueError("Unexpected value for output cell %s (expected RNN or FC got %s)" % (name,
                                                                                                       self.output_cell_type))
-            setattr(self, name + 'output_cell', output_cell)
+            setattr(self, 'output_cell' + name, output_cell)
 
     def create_hidden_variable(self, name, num_layers, hidden_size):
         if self.learn_hidden_state:
@@ -148,7 +148,7 @@ class LSTMNet(AbstractRNN):
 
         self.create_model(self.config.network, self.input_dimensions, self.config.data.nb_output)
 
-    def forward(self, x, seqs_size):
+    def forward(self, x, seqs_size=None):
         b = x.size(0)
         if self.optim_rnn:
             x = pack_padded_sequence(x, seqs_size, batch_first=self.batch_first, enforce_sorted=False)
@@ -196,15 +196,61 @@ class MultiTaskRNNet(AbstractRNN):
         self.create_model(self.config.tcClass, self.hidden_dimension, 4, 'tcClass')
         self.create_model(self.config.centrallPressure, self.hidden_dimension, 1, 'centralPressure')
 
+    def forward_task(self, x, b, inner_cell_type, outer_cell_type, task_name, nb_output=None):
+
+        if task_name:
+            task_name = '_' + task_name
+
+        inner_cell = getattr(self, 'inner_model' + task_name)
+
+        if self.learn_hidden_state:
+            h0 = getattr(self, 'h0_i' + task_name)
+            if inner_cell_type == 'lstm':
+                c0 = getattr(self, 'c0_i' + task_name)
+                inner_out, _ = inner_cell(x, (h0.repeat(1, b, 1), c0.repeat(1, b, 1)))
+            else:
+                inner_out, _ = inner_cell(x, h0.repeat(1, b, 1))
+        else:
+            inner_out, _ = inner_cell(x)
+
+        output_cell = getattr(self, 'output_cell' + task_name)
+
+        if outer_cell_type.lower() == 'rnn':
+            if self.learn_hidden_state:
+                h0 = getattr(self, 'h0_o' + task_name)
+                out, _ = output_cell(x, h0.repeat(1, b, 1))
+            else:
+                out, _ = output_cell(x)
+
+            return self.unpad(out)
+
+        else:
+            out = self.unpad(inner_out)
+            time_step = out.size(1)
+            l_out = out.view(-1, self.hidden_dimension)
+            outs = output_cell(l_out).view(-1, time_step, nb_output)
+            return outs
+
     def forward(self, x, seqs_size):
         b = x.size(0)
         if self.optim_rnn:
             x = pack_padded_sequence(x, seqs_size, batch_first=self.batch_first, enforce_sorted=False)
 
         if self.learn_hidden_state:
-            if self.cell_type == 'lstm':
-                lstm_out, _ = self.inner_model(x, (self.h0_i.repeat(1, b, 1), self.c0_i.repeat(1, b, 1)))
+            if self.config.network.cell_type == 'lstm':
+                first_out, _ = self.inner_model(x, (self.h0_i.repeat(1, b, 1), self.c0_i.repeat(1, b, 1)))
             else:
-                lstm_out, _ = self.inner_model(x, self.h0_i.repeat(1, b, 1))
+                first_out, _ = self.inner_model(x, self.h0_i.repeat(1, b, 1))
         else:
-            lstm_out, _ = self.inner_model(x)
+            first_out, _ = self.inner_model(x)
+
+        tcXetc_out = self.forward_task(first_out, b, self.config.tcXetc.cell_type.lower(),
+                                       self.output_cell_type.lower(), 'tcXetc', 2)
+
+        tcClass_out = self.forward_task(first_out, b, self.config.tcClass.cell_type.lower(),
+                                       self.output_cell_type.lower(), 'tcClass', 4)
+
+        pressure_out = self.forward_task(first_out, b, self.config.centralPressure.cell_type.lower(),
+                                        self.output_cell_type.lower(), 'centralPressure', 1)
+
+        return tcXetc_out, tcClass_out, pressure_out
