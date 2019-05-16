@@ -177,7 +177,7 @@ class LSTMNet(AbstractRNN):
             return self.unpad(out)
 
 
-class MultiTaskRNNNet(AbstractRNN):
+class MultiTaskRNNet(AbstractRNN):
     """
     This class has three outputs:
     - TC vs ETC: nb_channels = 2
@@ -186,7 +186,7 @@ class MultiTaskRNNNet(AbstractRNN):
     """
 
     def __init__(self, config):
-        super(MultiTaskRNNNet, self).__init__(config)
+        super(MultiTaskRNNet, self).__init__(config)
 
 
         if self.cell_type == 'lstm':

@@ -146,7 +146,8 @@ class RNNRegressionTrainer():
                                                       use_datetime=self.config.training.save_in_timestamp_folder)
 
             p_epoch.succeed()
-            lr_decayer.step(validation_loss)
+            if e:
+                lr_decayer.step(validation_loss)
 
     def _print(self, *a, **b):
         if self.s_print is None:
