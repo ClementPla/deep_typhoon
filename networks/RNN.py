@@ -194,7 +194,7 @@ class MultiTaskRNNet(AbstractRNN):
         self.hidden_dimension = self.directional_mult * self.hidden_size
         self.create_model(self.config.tcXetc, self.hidden_dimension, 2, 'tcXetc')
         self.create_model(self.config.tcClass, self.hidden_dimension, 4, 'tcClass')
-        self.create_model(self.config.centrallPressure, self.hidden_dimension, 1, 'centralPressure')
+        self.create_model(self.config.centralPressure, self.hidden_dimension, 1, 'centralPressure')
 
     def forward_task(self, x, b, inner_cell_type, outer_cell_type, task_name, nb_output=None):
 
