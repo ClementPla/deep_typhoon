@@ -273,19 +273,23 @@ class RNNClassifierTrainer():
         else:
             return full_pred, full_gt, full_loss
 
-    def evaluate(self, output_prob=False):
+    def evaluate(self):
 
         test_loader = DataLoader(dataset=self.tsd_test, batch_size=self.config.hp.batch_size,
                                  shuffle=False, pin_memory=False)
 
         self.model.load(self.config.experiment.output_dir, load_most_recent=True)
-        pred, gt, _, prob, std = self.test(self.model, test_loader, True, self.config.testing.use_uncertain)
+        if self.config.testing.use_uncertain:
+            pred, gt, _, prob, std = self.test(self.model, test_loader, True, self.config.testing.use_uncertain)
+        else:
+            pred, gt, _, prob = self.test(self.model, test_loader, True, self.config.testing.use_uncertain)
+
         conf = ConfMatrix.confusion_matrix(gt, pred)
         if self.config.experiment.task == 'tc_etc':
             conf.labels = ['TC', 'ETC']
         self._print("Test: accuracy %f, precision %f, recall %f" % (conf.accuracy(), conf.precision(), conf.recall()))
 
-        if output_prob:
+        if self.config.testing.use_uncertain:
             return conf, prob, std
         else:
-            return conf
+            return conf, prob
