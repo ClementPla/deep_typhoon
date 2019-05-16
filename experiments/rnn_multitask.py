@@ -57,12 +57,19 @@ class RNNMultiTaskTrainer():
 
         data['tcXetc'] = data['class'].apply(lambda x: 0 if int(x) != 6 else 1)
         classes = np.asarray(data['class']) - 2
+
         classes[classes == 4] = -1
         classes[classes == 5] = -1
         data['tcClass'] = classes
 
         self.datasets = split_dataframe(data, test_set_year=self.config.data.test_split_set,
                                         validation_ratio=self.config.data.validation_ratio)
+
+        values, _ = np.histogram(self.datasets['train']['tcXetc'], len(np.unique(self.datasets['train']['tcXetc'])))
+        self.class_weighting_tcXetc = (1 - np.asarray(values) / sum(values)).astype(np.float32)
+
+        values, _ = np.histogram(self.datasets['train']['tcClass'], len(np.unique(self.datasets['train']['tcClass'])))
+        self.class_weighting_tcClass = (1 - np.asarray(values[1:]) / sum(values[1:])).astype(np.float32)
 
         col = ['z_space', 'pressure', 'tcXetc', 'tcClass']
         if self.config.model.impute_missing:
@@ -144,8 +151,8 @@ class RNNMultiTaskTrainer():
                     output = tcClass_out.view(-1, tcClass_out.size(-1))
                     y_Class = torch.flatten(y_Class)
                     only_tc = y_Class >= 0
-                    masked_output = only_tc * mask_seq * output
-                    l_tcClass = CElossTCClass(masked_output, only_tc * y_Class)
+                    masked_output = mask_seq * output
+                    l_tcClass = CElossTCClass(masked_output[only_tc], y_Class[only_tc])
 
                     l_total = l_tcXetc + l_pressure + l_tcClass
                     self.model.zero_grad()
@@ -189,6 +196,7 @@ class RNNMultiTaskTrainer():
     def test(self, model, dataloader, use_uncertain=False):
         model.eval()
         MSEloss = nn.L1Loss(reduction='none')
+        
         with torch.no_grad():
             full_pred = []
             full_gt = []

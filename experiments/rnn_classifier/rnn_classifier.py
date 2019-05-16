@@ -66,7 +66,6 @@ class RNNClassifierTrainer():
                                         validation_ratio=self.config.data.validation_ratio)
 
         values, _ = np.histogram(self.datasets['train']['class'], len(np.unique(self.datasets['train']['class'])))
-
         self.class_weighting = (1 - np.asarray(values) / sum(values)).astype(np.float32)
 
         self.tsd_train = TyphoonSequencesDataset(self.datasets['train'], max_sequences_length,
