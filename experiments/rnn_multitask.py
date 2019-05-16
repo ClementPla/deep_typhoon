@@ -144,14 +144,14 @@ class RNNMultiTaskTrainer():
                     ### TC vs ETC
                     output = tcXetc_out.view(-1, tcXetc_out.size(-1))
                     y_tcXetc = torch.flatten(y_tcXetc)
-                    masked_output = mask_seq * output
+                    masked_output = mask_seq.view(-1, 1) * output
                     l_tcXetc = CElossTCxETC(masked_output, y_tcXetc)
 
                     ### TC Classification
                     output = tcClass_out.view(-1, tcClass_out.size(-1))
                     y_Class = torch.flatten(y_Class)
                     only_tc = y_Class >= 0
-                    masked_output = mask_seq * output
+                    masked_output = mask_seq.view(-1, 1) * output
                     l_tcClass = CElossTCClass(masked_output[only_tc], y_Class[only_tc])
 
                     l_total = l_tcXetc + l_pressure + l_tcClass
@@ -196,7 +196,7 @@ class RNNMultiTaskTrainer():
     def test(self, model, dataloader, use_uncertain=False):
         model.eval()
         MSEloss = nn.L1Loss(reduction='none')
-        
+
         with torch.no_grad():
             full_pred = []
             full_gt = []
