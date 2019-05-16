@@ -148,7 +148,7 @@ class LSTMNet(AbstractRNN):
 
         self.create_model(self.config.network, self.input_dimensions, self.config.data.nb_output)
 
-    def forward(self, x, seqs_size=None):
+    def forward(self, x, seqs_size=None, *args):
         b = x.size(0)
         if self.optim_rnn:
             x = pack_padded_sequence(x, seqs_size, batch_first=self.batch_first, enforce_sorted=False)
