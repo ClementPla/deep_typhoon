@@ -14,8 +14,11 @@ def avance_time(df, column, delay):
         indexes = np.arange(0, seq_length)[::-1]
         df.loc[(seq, 'temp_index')] = indexes  # Create temporary indexes to indicate which values to delete
     df = df.set_index('temp_index', append=True)
-    df.drop(np.arange(0, delay), level=2, inplace=True)  # Drop those values
-    df = df.reset_index(level=2, drop=True)  # Remove temporary indexes
+    df.drop(np.arange(0, delay), level=2, inplace=True)
+    # Drop those values in the temporary index (this corresponds to the last delayed frames
+
+    df = df.reset_index(level=2, drop=True)  # Remove the temporary indexes
+    df.index = df.index.set_levels(df.index.levels[1]+delay, level=1) # Shift the actual index by the delay
     return df
 
 
