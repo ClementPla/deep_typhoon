@@ -181,8 +181,11 @@ class LSTMNet(AbstractRNN):
                 for t_adv in range(self.config.experiment.prediction_avance):
                     hx = self.output_cell(inner_state[t], hx)
                     out.append(hx)
+                out = torch.cat(out, 0)
                 output.append(out)
-            return torch.FloatTensor(output)
+            output = torch.cat(output, 0)
+            print(output.size())
+            return output
         else:
             if self.output_cell_type == 'direct':
                 return self.unpad(lstm_out)
