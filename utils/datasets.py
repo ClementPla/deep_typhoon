@@ -30,7 +30,7 @@ def advance_time(df, delay, column=None, keep_all_timestep=False):
                 df.loc[(seq, col)] = np.roll(df_seq[col], -delay)
             else:
                 list_timestamp = []
-                for t in range(delay):
+                for t in range(delay+1):
                     list_timestamp.append(np.roll(df_seq[col], -t))
                 list_timestamp = np.vstack(list_timestamp).transpose().tolist()
                 cols[col] += list_timestamp

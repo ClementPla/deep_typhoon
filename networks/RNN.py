@@ -178,14 +178,14 @@ class LSTMNet(AbstractRNN):
             inner_state = inner_state.permute(1, 0, 2)
             for t in range(max_seqs_size):
                 out = []
-                for t_adv in range(self.config.experiment.prediction_avance):
+                for t_adv in range(self.config.experiment.prediction_avance+1):
                     hx = self.output_cell(inner_state[t], hx)
                     out.append(hx)
 
                 out = torch.cat(out, -1)
-
+                torch._unsqueeze(1)
                 output.append(out)
-            output = torch.cat(output, 0).view(b, max_seqs_size, self.config.experiment.prediction_avance)
+            output = torch.cat(output, 1)
             return output
         else:
             if self.output_cell_type == 'direct':
