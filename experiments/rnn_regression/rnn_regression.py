@@ -185,7 +185,7 @@ class RNNRegressionTrainer():
                     l = input_train[3]
                     x = model.imputation(x, m, l)
                 if self.config.experiment.predict_all_timestep:
-                    y = [_[-1] for _ in y]
+                    y = y.view(-1, y.size(-1))[:, -1]
                 if use_uncertain:
                     outs = []
 
@@ -194,7 +194,7 @@ class RNNRegressionTrainer():
                     for i in range(n_iter):
                         output = model(x, seqs_size)
                         if self.config.experiment.predict_all_timestep:
-                            print(output.size())
+                            output = output[:,:,-1]
 
                         size = output.size()
                         outs.append(output)
@@ -206,7 +206,7 @@ class RNNRegressionTrainer():
                 else:
                     output = model(x, seqs_size)
                     if self.config.experiment.predict_all_timestep:
-                        output = [_[-1] for _ in output]
+                        output = output[:, :, -1]
 
                 masked_output = mask_seq * torch.squeeze(output)
 
