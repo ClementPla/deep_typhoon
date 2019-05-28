@@ -116,8 +116,13 @@ class RNNRegressionTrainer():
 
                     mask_seq = torch.flatten(mask_seq)
                     y = torch.flatten(y)
-                    output = torch.flatten(output)
-                    masked_output = mask_seq * output
+                    if self.config.experiment.predict_all_timestep:
+                        output = output.view(-1, output.size(-1))
+                        masked_output = mask_seq * output
+
+                    else:
+                        output = torch.flatten(output)
+                        masked_output = mask_seq * output
                     l = MSEloss(masked_output, y)
                     self.model.zero_grad()
                     # encoder

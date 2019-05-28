@@ -186,7 +186,6 @@ class LSTMNet(AbstractRNN):
 
                 output.append(out)
             output = torch.cat(output, 0).view(b, max_seqs_size, self.config.experiment.prediction_avance)
-            print(output.size())
             return output
         else:
             if self.output_cell_type == 'direct':
