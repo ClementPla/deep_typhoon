@@ -104,9 +104,10 @@ class AbstractRNN(AbstractNet):
             if 'nonlinearity' in config:
                 del config['nonlinearity']
 
-        self.create_hidden_variable('h0_i' + name, config.num_layers * self.directional_mult, config.hidden_size)
+        self.create_hidden_variable('h0_i' + name, (config.num_layers * self.directional_mult, 1, config.hidden_size))
         if config.cell_type.lower() == 'lstm':
-            self.create_hidden_variable('c0_i' + name, config.num_layers * self.directional_mult, config.hidden_size)
+            self.create_hidden_variable('c0_i' + name, (config.num_layers * self.directional_mult, 1,
+                                                        config.hidden_size))
 
         del config['cell_type']
         inner_model = model(input_size,
@@ -122,7 +123,7 @@ class AbstractRNN(AbstractNet):
                 output_cell = nn.RNNCell(config.hidden_size * self.directional_mult, output_size,
                                          nonlinearity=self.config.model.output_activation)
 
-                self.create_hidden_variable('h0_o' + name, 1, output_size)
+                self.create_hidden_variable('h0_o' + name, (1, output_size))
 
 
             else:
@@ -134,16 +135,16 @@ class AbstractRNN(AbstractNet):
                                          batch_first=True,
                                          nonlinearity=self.config.model.output_activation)
 
-                    self.create_hidden_variable('h0_o' + name, 1, output_size)
+                    self.create_hidden_variable('h0_o' + name, (1, 1, output_size)) # size (1, 1, output_size)
 
                 else:
                     raise ValueError("Unexpected value for output cell %s (expected RNN or FC got %s)" % (name,
                                                                                                           self.output_cell_type))
             setattr(self, 'output_cell' + name, output_cell)
 
-    def create_hidden_variable(self, name, num_layers, hidden_size):
+    def create_hidden_variable(self, name, size):
         if self.learn_hidden_state:
-            param = nn.Parameter(torch.zeros(num_layers, 1, hidden_size))
+            param = nn.Parameter(torch.zeros(*size))
             setattr(self, name, param)
 
 
@@ -171,7 +172,7 @@ class LSTMNet(AbstractRNN):
 
         if self.config.experiment.predict_all_timestep:
             inner_state = self.unpad(lstm_out)
-            hx = self.h0_o.repeat(1, b, 1)
+            hx = self.h0_o.repeat(b, 1)
             max_seqs_size = torch.max(seqs_size)
             output = []
             for t in range(max_seqs_size):
