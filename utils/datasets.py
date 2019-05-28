@@ -3,16 +3,21 @@ from torch.utils.data import Dataset
 import pandas as pd
 
 
-def advance_time(df, delay,column=None):
+def advance_time(df, delay, column=None):
     if column is None:
         column = list(df.columns)
 
     if not isinstance(column, list):
         column = [column]
 
-    if 'datetime' in column:
+    if 'datetime' in column or 'datetime' in df.columns:
         df.datetime += pd.Timedelta(delay, unit='h')
-        column.remove('datetime')
+        try:
+            column.remove('datetime')
+        except:
+            pass
+        
+
     sequences = np.unique(df.index.get_level_values(0))
     for seq in sequences:
         df_seq = df.loc[seq]
