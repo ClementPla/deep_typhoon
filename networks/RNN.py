@@ -175,6 +175,8 @@ class LSTMNet(AbstractRNN):
             hx = self.h0_o.repeat(b, 1)
             max_seqs_size = torch.max(seqs_size)
             output = []
+            print(inner_state.size())
+            inner_state = inner_state.permute(1, 0, 2)
             for t in range(max_seqs_size):
                 out = []
                 for t_adv in range(self.config.experiment.prediction_avance):
