@@ -112,7 +112,7 @@ class RNNRegressionTrainer():
                         m = input_train[2]
                         l = input_train[3]
                         x = self.model.imputation(x, m, l)
-                    output = self.model(x, seqs_size, flatten=True)
+                    output = self.model(x, seqs_size)
 
                     mask_seq = torch.flatten(mask_seq)
                     y = torch.flatten(y)

@@ -181,12 +181,8 @@ class LSTMNet(AbstractRNN):
                 for t_adv in range(self.config.experiment.prediction_avance):
                     hx = self.output_cell(inner_state[t], hx)
                     out.append(hx)
-                if 'flatten' in kwargs:
-                    if kwargs['flatten']:
-                        output += out
-                else:
-                    output.append(out)
-            return output
+                output.append(out)
+            return torch.FloatTensor(output)
         else:
             if self.output_cell_type == 'direct':
                 return self.unpad(lstm_out)
