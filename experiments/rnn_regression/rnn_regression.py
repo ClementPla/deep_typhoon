@@ -52,7 +52,7 @@ class RNNRegressionTrainer():
         if self.config.experiment.prediction_avance:
             if self.config.model.bidirectional:
                 warnings.warn('For predicting value, you should not use bidirectional models!')
-            data = avance_time(data, 'pressure', self.config.experiment.prediction_avance)
+            data = advance_time(data, self.config.experiment.prediction_avance)
         self.datasets = split_dataframe(data, test_set_year=self.config.data.test_split_set,
                                         validation_ratio=self.config.data.validation_ratio)
 
@@ -151,7 +151,7 @@ class RNNRegressionTrainer():
 
     def _print(self, *a, **b):
         if self.s_print is None:
-            print(*a, ** b)
+            print(*a, **b)
         else:
             self.s_print(*a, **b)
 

@@ -2,6 +2,7 @@ import pandas as pd
 import sys
 import random
 import warnings
+from IPython import display
 
 from torch import nn, optim
 import torch
@@ -11,11 +12,13 @@ from torch.optim.lr_scheduler import ExponentialLR, MultiStepLR, ReduceLROnPlate
 sys.path.insert(0, '/home/clement/code/src/deep_typhoon/')
 sys.path.insert(0, '/home/clement/code/JuNNo/lib/')
 
-from junno.j_utils import log, Process
+from junno.j_utils import Process
+from junno.j_utils.math import ConfMatrix
+
 from utils.temporal_tools import *
 from utils.datasets import *
 from utils.tensors import init_cuda_sequences_batch
-from networks.RNN import LSTMNet, MultiTaskRNNet
+from networks.RNN import MultiTaskRNNet
 from os import path
 
 
@@ -28,6 +31,12 @@ class RNNMultiTaskTrainer():
         if initialize:
             self.set_data()
             self.set_model()
+
+    def _print(self, *a, **b):
+        if self.s_print is None:
+            print(*a, ** b)
+        else:
+            self.s_print(*a, **b)
 
     def set_seed(self):
         seed = self.config.experiment.seed
@@ -53,7 +62,7 @@ class RNNMultiTaskTrainer():
         if self.config.experiment.prediction_avance:
             if self.config.model.bidirectional:
                 warnings.warn('For predicting value, you should not use bidirectional models!')
-            data = avance_time(data, ['pressure', 'class'], self.config.experiment.prediction_avance)
+            data = advance_time(data, self.config.experiment.prediction_avance)
 
         data['tcXetc'] = data['class'].apply(lambda x: 0 if int(x) != 6 else 1)
         classes = np.asarray(data['class']) - 2
@@ -105,7 +114,6 @@ class RNNMultiTaskTrainer():
                                        patience=self.config.training.lr_patience_decay)
 
         MSEloss = nn.L1Loss()
-
         CElossTCxETC = nn.CrossEntropyLoss(torch.from_numpy(self.class_weighting_tcXetc).cuda(self.config.experiment.gpu))
         CElossTCClass = nn.CrossEntropyLoss(torch.from_numpy(self.class_weighting_tcClass).cuda(self.config.experiment.gpu))
 
@@ -166,12 +174,22 @@ class RNNMultiTaskTrainer():
                                                   batch_size=self.config.hp.batch_size,
                                                   shuffle=True,
                                                   pin_memory=False)
-                        full_pred, full_gt, validation_loss = self.test(self.model, valid_loader)
 
+                        metrics, output = self.test(valid_loader)
+                        conf_tcXetc = metrics['tcXetc']
+                        conf_tcXetc.labels = ['TC', 'ETC']
+                        conf_tcClass = metrics['tcClass']
+                        
                         if self.config.training.verbose:
                             self._print("Epoch %i, iteration %s, Training loss %f" % (e + 1, i, float(l.cpu())))
                             self._print(
                                 "Validation: loss %f" % (validation_loss))
+
+
+                            if e % self.config.training.html_disp == 0:
+
+                                display.display(conf_tcXetc)
+                                display.display(conf_tcClass)
 
                         validation_criteria = validation_loss
 
@@ -187,82 +205,123 @@ class RNNMultiTaskTrainer():
             if e:
                 lr_decayer.step(validation_loss)
 
-    def _print(self, *a, **b):
-        if self.s_print is None:
-            print(*a, ** b)
-        else:
-            self.s_print(*a, **b)
 
-    def test(self, model, dataloader, use_uncertain=False):
-        model.eval()
-        MSEloss = nn.L1Loss(reduction='none')
+    def test(self, dataloader, use_uncertain=False):
+
+        def fill_task(i, length, pred_storage, gt_storage, std_storage, pred, y, std=None):
+            y_sample = y[i, :length]
+            pred_sample = pred[i, :length]
+            gt_storage.append(y_sample.flatten())
+            pred_storage.append(pred_sample.flatten())
+            if std is not None:
+                std_storage.append(std[i, :length].flatten())
+
+        self.model.eval()
 
         with torch.no_grad():
-            full_pred = []
-            full_gt = []
-            full_std = []
-            full_loss = []
+            full_pred = dict(tcXetc=[], tcClass=[], pressure=[])
+            full_gt = dict(tcXetc=[], tcClass=[], pressure=[])
+            full_std = dict(tcXetc=[], tcClass=[], pressure=[])
             nb_sequences = 0
+            loss_pressure = []
             for j, valid_batch in enumerate(dataloader):
                 seqs_size = valid_batch[-1].cuda(self.config.experiment.gpu)
                 nb_sequences += seqs_size.size(0)
                 max_batch_length = torch.max(seqs_size)
                 input_train = init_cuda_sequences_batch(valid_batch[:-1], max_batch_length, self.config.experiment.gpu)
-                mask_seq = input_train[-1]
                 x = input_train[0]
-                y_pressure = input_train[1]  # pressure
-                y_tcXetc = input_train[2]  # tcXetc
-                y_Class = input_train[3]  # tcClass
+                y_pressure = input_train[1].cpu().numpy()  # pressure
+                y_tcXetc = input_train[2].cpu().numpy()  # tcXetc
+                y_Class = input_train[3].cpu().numpy()  # tcClass
 
                 if self.config.model.impute_missing:
                     m = input_train[4]
                     l = input_train[5]
-                    x = model.imputation(x, m, l)
+                    x = self.model.imputation(x, m, l)
 
                 if use_uncertain:
-                    outs = []
+                    tcXetc_outs = []
+                    tcClass_outs = []
+                    pressure_outs = []
 
-                    model.train()
+                    self.model.train()
                     n_iter = use_uncertain
                     for i in range(n_iter):
-                        output = model(x, seqs_size)
-                        size = output.size()
-                        outs.append(output)
+                        tcXetc_out, tcClass_out, pressure_out = model(x, seqs_size)
+                        tcXetc_outs.append(tcXetc_out)
+                        tcClass_outs.append(tcClass_out)
+                        pressure_outs.append(pressure_out)
 
-                    outs = torch.cat(outs).view(n_iter, *size)
-                    output = torch.mean(outs, dim=0)
-                    std_out = torch.std(outs, dim=0).cpu().numpy()
+                    tcXetc_outs = torch.cat(tcXetc_outs).view(n_iter, *tcXetc_outs[-1].size())
+                    tcXetc_pred = torch.mean(tcXetc_outs, dim=0)
+                    tcXetc_std = torch.std(tcXetc_outs, dim=0).cpu().numpy()
+
+                    tcClass_outs = torch.cat(tcClass_outs).view(n_iter, *tcClass_outs[-1].size())
+                    tcClass_pred = torch.mean(tcClass_outs, dim=0)
+                    tcClass_std = torch.std(tcClass_outs, dim=0).cpu().numpy()
+
+                    pressure_outs = torch.cat(pressure_outs).view(n_iter, *pressure_outs[-1].size())
+                    pressure_pred = torch.mean(pressure_outs, dim=0)
+                    pressure_std = torch.std(pressure_outs, dim=0).cpu().numpy()
 
                 else:
-                    output = model(x, seqs_size)
+                    tcXetc_pred, tcClass_pred, pressure_pred = model(x, seqs_size)
+                    pressure_std = None
+                    tcClass_std = None
+                    tcXetc_std = None
 
-                masked_output = mask_seq * torch.squeeze(output)
 
-                l = MSEloss(masked_output, torch.squeeze(y)).cpu().numpy()
 
-                pred = masked_output.cpu().numpy()
-
-                y = y.cpu().numpy()
                 seqs_size = seqs_size.cpu().numpy()
                 for i, length in enumerate(seqs_size):
-                    y_sample = y[i, :length]
-                    pred_sample = pred[i, :length]
-                    full_gt.append(y_sample.flatten())
-                    full_pred.append(pred_sample.flatten())
-                    full_loss.append(l[i, :length])
-                    if use_uncertain:
-                        full_std.append(std_out[i, :length].flatten())
+                    fill_task(i, length, full_pred['tcClass'],
+                              full_gt['tcClass'],
+                              full_std['tcClass'],
+                              tcClass_pred,
+                              y_Class,
+                              tcClass_std)
 
-        full_pred = np.hstack(full_pred)
-        full_gt = np.hstack(full_gt)
-        full_loss = np.mean(np.hstack(full_loss))
-        if use_uncertain:
-            full_std = np.hstack(full_std)
+                    fill_task(i, length, full_pred['tcXetc'],
+                              full_gt['tcXetc'],
+                              full_std['tcXetc'],
+                              tcXetc_pred,
+                              y_tcXetc,
+                              tcXetc_std)
 
+                    fill_task(i, length, full_pred['pressure'],
+                              full_gt['pressure'],
+                              full_std['pressure'],
+                              pressure_pred,
+                              y_pressure,
+                              pressure_std)
+
+                    loss_pressure.append(np.mean(np.abs(full_pred['pressure'])-full_gt['pressure']))
+
+        for k in full_gt:
+            full_gt[k] = np.squeeze(np.hstack(full_gt[k]))
+            full_pred[k] = np.squeeze(np.hstack(full_pred[k]))
+            if use_uncertain:
+                full_std[k] = np.hstack(full_std[k])
+
+        loss_pressure = np.mean(loss_pressure)
+
+        prediction_tcXetc = np.argmax(full_pred['tcXetc'], axis=1)
+        conf_tcXetc = ConfMatrix.confusion_matrix(full_gt['tcXetc'], prediction_tcXetc)
+
+        prediction_tcClass = np.argmax(full_pred['tcClass'], axis=1)
+        conf_tcClass = ConfMatrix.confusion_matrix(full_gt['tcClass'], prediction_tcClass)
+
+        metrics = dict(pressure=loss_pressure, tcXetc=conf_tcXetc, tcClass=conf_tcClass)
+        model_outputs = dict(pressure=full_pred['pressure'],
+                             tcXetc=full_pred['tcXetc'],
+                             tcClass=full_pred['tcClass'])
+        std_outputs = dict(pressure_std=full_std['pressure'],
+                           tcXetc_std=full_std['tcXetc'],
+                           tcClass_std=full_std['tcClass'])
         if use_uncertain:
-            return full_pred, full_gt, full_loss, full_std
+            return metrics, model_outputs, std_outputs
         else:
-            return full_pred, full_gt, full_loss
+            return metrics, model_outputs
 
     def evaluate(self, use_uncertain=100):
 
@@ -271,9 +330,9 @@ class RNNMultiTaskTrainer():
 
         self.model.load(self.config.experiment.output_dir, load_most_recent=True)
         if use_uncertain:
-            pred, gt, loss, std = self.test(self.model, test_loader, use_uncertain)
+            pred, gt, loss, std = self.test(test_loader, use_uncertain)
         else:
-            pred, gt, loss = self.test(self.model, test_loader, use_uncertain)
+            pred, gt, loss = self.test(test_loader, use_uncertain)
 
         self._print("Test: loss %f" % loss)
         if use_uncertain:
