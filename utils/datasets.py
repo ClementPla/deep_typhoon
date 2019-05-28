@@ -3,7 +3,8 @@ from torch.utils.data import Dataset
 import pandas as pd
 
 
-def advance_time(df, delay, column=None):
+def advance_time(df, delay, column=None, keep_all_timestamp=False):
+    df = df.copy()
     if column is None:
         column = list(df.columns)
 
@@ -16,22 +17,36 @@ def advance_time(df, delay, column=None):
             column.remove('datetime')
         except:
             pass
-        
-
     sequences = np.unique(df.index.get_level_values(0))
+    if keep_all_timestamp:
+        cols = dict()
+        for col in column:
+            cols[col] = []
+
     for seq in sequences:
         df_seq = df.loc[seq]
         for col in column:
-            df.loc[(seq, col)] = np.roll(df_seq[col], -delay)
+            if not keep_all_timestamp:
+                df.loc[(seq, col)] = np.roll(df_seq[col], -delay)
+            else:
+                list_timestamp = []
+                for t in range(delay):
+                    list_timestamp.append(np.roll(df_seq[col], -t))
+                list_timestamp = np.vstack(list_timestamp).transpose().tolist()
+                cols[col] += list_timestamp
         seq_length = len(df_seq)
         indexes = np.arange(0, seq_length)[::-1]
         df.loc[(seq, 'temp_index')] = indexes  # Create temporary indexes to indicate which values to delete
+
+    if keep_all_timestamp:
+        for col in cols:
+            df[col] = cols[col]
     df = df.set_index('temp_index', append=True)
     df.drop(np.arange(0, delay), level=2, inplace=True)
     # Drop those values in the temporary index (this corresponds to the last delayed frames
 
     df = df.reset_index(level=2, drop=True)  # Remove the temporary indexes
-    df.index = df.index.set_levels(df.index.levels[1]+delay, level=1) # Shift the actual index by the delay
+    df.index = df.index.set_levels(df.index.levels[1] + delay, level=1)  # Shift the actual index by the delay
     return df
 
 
