@@ -185,7 +185,7 @@ class RNNRegressionTrainer():
                     l = input_train[3]
                     x = model.imputation(x, m, l)
                 if self.config.experiment.predict_all_timestep:
-                    y = y.view(-1, y.size(-1))[:, -1]
+                    y = y.view(-1, self.config.experiment.prediction_avance)[:, -1]
                 if use_uncertain:
                     outs = []
 
