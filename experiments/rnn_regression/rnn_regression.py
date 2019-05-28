@@ -119,7 +119,7 @@ class RNNRegressionTrainer():
                     if self.config.experiment.predict_all_timestep:
                         output = output.view(-1, output.size(-1))
                         print(output.size(), mask_seq.size())
-                        masked_output = torch.flatten(mask_seq * output)
+                        masked_output = torch.flatten(mask_seq.view(-1, 1) * output)
 
                     else:
                         output = torch.flatten(output)
