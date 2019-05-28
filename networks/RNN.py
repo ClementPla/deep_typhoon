@@ -183,7 +183,7 @@ class LSTMNet(AbstractRNN):
                     out.append(hx)
 
                 out = torch.cat(out, -1)
-                out._unsqueeze(1)
+                out.unsqueeze_(1)
                 output.append(out)
             output = torch.cat(output, 1)
             return output
