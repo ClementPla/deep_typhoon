@@ -179,7 +179,6 @@ class RNNRegressionTrainer():
                 mask_seq = input_train[-1]
                 x = input_train[0]
                 y = input_train[1]
-                print(y.size())
                 if self.config.model.impute_missing:
                     m = input_train[2]
                     l = input_train[3]
