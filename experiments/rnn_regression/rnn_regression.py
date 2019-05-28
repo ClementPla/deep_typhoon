@@ -186,7 +186,6 @@ class RNNRegressionTrainer():
                     x = model.imputation(x, m, l)
                 if self.config.experiment.predict_all_timestep:
                     y = y[:, :, -1]
-                    y = torch.flatten(y)
                 if use_uncertain:
                     outs = []
 
