@@ -52,7 +52,9 @@ class RNNRegressionTrainer():
         if self.config.experiment.prediction_avance:
             if self.config.model.bidirectional:
                 warnings.warn('For predicting value, you should not use bidirectional models!')
-            data = advance_time(data, self.config.experiment.prediction_avance, 'pressure')
+            data = advance_time(data, self.config.experiment.prediction_avance, 'pressure',
+                                self.config.experiment.predict_all_timestep)
+
         self.datasets = split_dataframe(data, test_set_year=self.config.data.test_split_set,
                                         validation_ratio=self.config.data.validation_ratio)
 
@@ -176,7 +178,8 @@ class RNNRegressionTrainer():
                     m = input_train[2]
                     l = input_train[3]
                     x = model.imputation(x, m, l)
-
+                if self.config.experiment.predict_all_timestep:
+                    y = [_[-1] for _ in y]
                 if use_uncertain:
                     outs = []
 
@@ -184,6 +187,9 @@ class RNNRegressionTrainer():
                     n_iter = use_uncertain
                     for i in range(n_iter):
                         output = model(x, seqs_size)
+                        if self.config.experiment.predict_all_timestep:
+                            output = [_[-1] for _ in output]
+
                         size = output.size()
                         outs.append(output)
 
@@ -193,6 +199,8 @@ class RNNRegressionTrainer():
 
                 else:
                     output = model(x, seqs_size)
+                    if self.config.experiment.predict_all_timestep:
+                        output = [_[-1] for _ in output]
 
                 masked_output = mask_seq * torch.squeeze(output)
 

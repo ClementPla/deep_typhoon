@@ -3,7 +3,7 @@ from torch.utils.data import Dataset
 import pandas as pd
 
 
-def advance_time(df, delay, column=None, keep_all_timestamp=False):
+def advance_time(df, delay, column=None, keep_all_timestep=False):
     df = df.copy()
     if column is None:
         column = list(df.columns)
@@ -18,7 +18,7 @@ def advance_time(df, delay, column=None, keep_all_timestamp=False):
         except:
             pass
     sequences = np.unique(df.index.get_level_values(0))
-    if keep_all_timestamp:
+    if keep_all_timestep:
         cols = dict()
         for col in column:
             cols[col] = []
@@ -26,7 +26,7 @@ def advance_time(df, delay, column=None, keep_all_timestamp=False):
     for seq in sequences:
         df_seq = df.loc[seq]
         for col in column:
-            if not keep_all_timestamp:
+            if not keep_all_timestep:
                 df.loc[(seq, col)] = np.roll(df_seq[col], -delay)
             else:
                 list_timestamp = []
@@ -38,7 +38,7 @@ def advance_time(df, delay, column=None, keep_all_timestamp=False):
         indexes = np.arange(0, seq_length)[::-1]
         df.loc[(seq, 'temp_index')] = indexes  # Create temporary indexes to indicate which values to delete
 
-    if keep_all_timestamp:
+    if keep_all_timestep:
         for col in cols:
             df[col] = cols[col]
     df = df.set_index('temp_index', append=True)

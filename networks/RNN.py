@@ -118,19 +118,27 @@ class AbstractRNN(AbstractNet):
         setattr(self, 'inner_model' + name, inner_model)
 
         if output_size is not None:
-            if self.output_cell_type.lower() == 'fc':
-                output_cell = nn.Linear(config.hidden_size * self.directional_mult, output_size)
-            elif self.output_cell_type.lower() == 'rnn':
-                output_cell = nn.RNN(config.hidden_size * self.directional_mult,
-                                     output_size,
-                                     batch_first=True,
-                                     nonlinearity=self.config.model.output_activation)
+            if self.config.experiment.predict_all_timestep:
+                output_cell = nn.RNNCell(config.hidden_size*self.directional_mult, output_size,
+                                         nonlinearity=self.config.model.output_activation)
 
                 self.create_hidden_variable('h0_o' + name, 1, output_size)
 
+
             else:
-                raise ValueError("Unexpected value for output cell %s (expected RNN or FC got %s)" % (name,
-                                                                                                      self.output_cell_type))
+                if self.output_cell_type.lower() == 'fc':
+                    output_cell = nn.Linear(config.hidden_size * self.directional_mult, output_size)
+                elif self.output_cell_type.lower() == 'rnn':
+                    output_cell = nn.RNN(config.hidden_size * self.directional_mult,
+                                         output_size,
+                                         batch_first=True,
+                                         nonlinearity=self.config.model.output_activation)
+
+                    self.create_hidden_variable('h0_o' + name, 1, output_size)
+
+                else:
+                    raise ValueError("Unexpected value for output cell %s (expected RNN or FC got %s)" % (name,
+                                                                                                          self.output_cell_type))
             setattr(self, 'output_cell' + name, output_cell)
 
     def create_hidden_variable(self, name, num_layers, hidden_size):
@@ -161,21 +169,36 @@ class LSTMNet(AbstractRNN):
         else:
             lstm_out, _ = self.inner_model(x)
 
-        if self.output_cell_type == 'direct':
-            return self.unpad(lstm_out)
+        if self.config.experiment.predict_all_timestep:
+            inner_state = self.unpad(lstm_out)
+            hx = self.h0_0.repeat(1, b, 1)
+            max_seqs_size = torch.max(seqs_size)
+            output = []
+            for t in range(max_seqs_size):
+                out = []
+                for t_adv in range(self.config.experiment.prediction_avance):
+                    hx = self.output_cell(inner_state[t], hx)
+                    out.append(hx)
+                output.append(out)
+            return output
+        else:
+            if self.output_cell_type == 'direct':
+                return self.unpad(lstm_out)
 
-        elif self.output_cell_type == 'fc':
-            out = self.unpad(lstm_out)
-            time_step = out.size(1)
-            l_out = out.view(-1, self.hidden_dimension)
-            outs = self.output_cell(l_out).view(-1, time_step, self.config.data.nb_output)
-            return outs
-        elif self.output_cell_type == 'rnn':
-            if self.learn_hidden_state:
-                out, _ = self.output_cell(lstm_out, self.h0_o.repeat(1, b, 1))
-            else:
-                out, _ = self.output_cell(lstm_out)
-            return self.unpad(out)
+            elif self.output_cell_type == 'fc':
+                out = self.unpad(lstm_out)
+                time_step = out.size(1)
+                l_out = out.view(-1, self.hidden_dimension)
+                outs = self.output_cell(l_out).view(-1, time_step, self.config.data.nb_output)
+                return outs
+            elif self.output_cell_type == 'rnn':
+                if self.learn_hidden_state:
+                    out, _ = self.output_cell(lstm_out, self.h0_o.repeat(1, b, 1))
+                else:
+                    out, _ = self.output_cell(lstm_out)
+                return self.unpad(out)
+
+
 
 
 class MultiTaskRNNet(AbstractRNN):
