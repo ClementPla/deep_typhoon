@@ -171,7 +171,7 @@ class LSTMNet(AbstractRNN):
 
         if self.config.experiment.predict_all_timestep:
             inner_state = self.unpad(lstm_out)
-            hx = self.h0_0.repeat(1, b, 1)
+            hx = self.h0_o.repeat(1, b, 1)
             max_seqs_size = torch.max(seqs_size)
             output = []
             for t in range(max_seqs_size):
