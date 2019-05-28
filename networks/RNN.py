@@ -119,7 +119,7 @@ class AbstractRNN(AbstractNet):
 
         if output_size is not None:
             if self.config.experiment.predict_all_timestep:
-                output_cell = nn.RNNCell(config.hidden_size*self.directional_mult, output_size,
+                output_cell = nn.RNNCell(config.hidden_size * self.directional_mult, output_size,
                                          nonlinearity=self.config.model.output_activation)
 
                 self.create_hidden_variable('h0_o' + name, 1, output_size)
@@ -199,8 +199,6 @@ class LSTMNet(AbstractRNN):
                 return self.unpad(out)
 
 
-
-
 class MultiTaskRNNet(AbstractRNN):
     """
     This class has three outputs:
@@ -271,9 +269,9 @@ class MultiTaskRNNet(AbstractRNN):
                                        self.output_cell_type.lower(), 'tcXetc', 2)
 
         tcClass_out = self.forward_task(first_out, b, self.config.tcClass.cell_type.lower(),
-                                       self.output_cell_type.lower(), 'tcClass', 4)
+                                        self.output_cell_type.lower(), 'tcClass', 4)
 
         pressure_out = self.forward_task(first_out, b, self.config.centralPressure.cell_type.lower(),
-                                        self.output_cell_type.lower(), 'centralPressure', 1)
+                                         self.output_cell_type.lower(), 'centralPressure', 1)
 
         return tcXetc_out, tcClass_out, pressure_out
