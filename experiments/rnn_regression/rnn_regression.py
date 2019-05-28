@@ -112,11 +112,11 @@ class RNNRegressionTrainer():
                         m = input_train[2]
                         l = input_train[3]
                         x = self.model.imputation(x, m, l)
-                    output = self.model(x, seqs_size)
+                    output = self.model(x, seqs_size, flatten=True)
 
                     mask_seq = torch.flatten(mask_seq)
                     y = torch.flatten(y)
-                    output = torch.flatten(sum(output))
+                    output = torch.flatten(output)
                     masked_output = mask_seq * output
                     l = MSEloss(masked_output, y)
                     self.model.zero_grad()

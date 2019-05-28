@@ -181,7 +181,11 @@ class LSTMNet(AbstractRNN):
                 for t_adv in range(self.config.experiment.prediction_avance):
                     hx = self.output_cell(inner_state[t], hx)
                     out.append(hx)
-                output.append(out)
+                if 'flatten' in kwargs:
+                    if kwargs['flatten']:
+                        output += out
+                else:
+                    output.append(out)
             return output
         else:
             if self.output_cell_type == 'direct':
