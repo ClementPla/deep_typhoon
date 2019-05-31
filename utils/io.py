@@ -31,3 +31,8 @@ def save_numpy(arr, path):
     create_folder(path)
     np.save(path, arr)
 
+
+def get_typhoon_name(filename):
+    return filename.split('-')[2].split('.h')[0]
+
+

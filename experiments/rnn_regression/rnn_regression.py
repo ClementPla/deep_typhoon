@@ -148,7 +148,7 @@ class RNNRegressionTrainer():
                         else:
                             if validation_criteria < min_criteria_validation:
                                 min_criteria_validation = validation_criteria
-                                self.model.save_model(epoch=e, iteration=i, loss=validation_loss,
+                                self.model.save_model(epoch=e+1, iteration=i, loss=validation_loss,
                                                       use_datetime=self.config.training.save_in_timestamp_folder)
 
             p_epoch.succeed()
