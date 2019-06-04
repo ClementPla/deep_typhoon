@@ -32,7 +32,7 @@ def save_numpy(arr, path):
     np.save(path, arr)
 
 
-def get_typhoon_name(filename):
+def get_satellite_name(filename):
     return filename.split('-')[2].split('.h')[0]
 
 

@@ -62,7 +62,7 @@ class RNNClassifierTrainer():
         # Get the size of the longest sequence
         max_sequences_length = get_sequence_max_length(data)
         data = data.astype({"m": np.float32, "l": np.float32})
-        self.datasets = split_dataframe(data, test_set_year=self.config.data.test_split_set,
+        self.datasets = split_dataframe(data, test_years=self.config.data.test_split_set,
                                         validation_ratio=self.config.data.validation_ratio)
 
         values, _ = np.histogram(self.datasets['train']['class'], len(np.unique(self.datasets['train']['class'])))

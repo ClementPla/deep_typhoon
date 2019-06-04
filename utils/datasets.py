@@ -4,6 +4,17 @@ import pandas as pd
 
 
 def advance_time(df, delay, column=None, keep_all_timestep=False):
+    """
+    This function rolls the given columns of the given dataframe by a number of hours defined by the delay.
+    It also erases the last n-rows (n=delay) of each sequences.
+    :param df:
+    :param delay:
+    :param column:
+    :param keep_all_timestep: (bool) if set to True, at each timestamp, for each column, the model not only roll the value
+    from the future, but also keeps all intermediate values between t and t+delay.
+    Therefore, each cell becomes an array containing n values (n=delay)
+    :return:
+    """
     df = df.copy()
     if column is None:
         column = list(df.columns)
@@ -50,36 +61,49 @@ def advance_time(df, delay, column=None, keep_all_timestep=False):
     return df
 
 
-def split_dataframe(df, test_set_year=2011, validation_ratio=0.2, seed=1234):
+def split_dataframe(df, test_years=2011, validation_ratio=0.2, seed=1234):
     """
     Splits the dataframe in training, validation and test set. The test set is defined by a year (all sequences coming
     after this year are in the test set). The validation test is defined as a fraction of the training set (randomized)
-    :param df:
-    :param test_set_year:
-    :param validation_ratio:
+    :param df: Dataframe containing all the sequences
+    :param test_years: int of list. If list, all years in the list are used for testing. If int,
+    all years > test_years are used for testing.
+    :param validation_ratio: Proportion of the training set used as validation.
     :return: A dictionary containing three keys (train, validation, test) and their respective dataframe
     """
 
     sequences = df.index.get_level_values(0)
-    prev2011 = np.unique([_ for _ in sequences if int(_[:4]) <= test_set_year])
-    post2011 = np.unique([_ for _ in sequences if int(_[:4]) > test_set_year])
+    if isinstance(test_years, int):
+        training_sequences = np.unique([_ for _ in sequences if int(_[:4]) <= test_years])
+        testing_sequences = np.unique([_ for _ in sequences if int(_[:4]) > test_years])
+    elif isinstance(test_years, list):
+        testing_sequences = [_ for _ in sequences if int(_[:4]) in test_years]
+        training_sequences = [_ for _ in sequences if _ not in testing_sequences]
+    else:
+        raise ValueError("Expected either a list or a year for testing sequences, got ", test_years)
     np.random.seed(seed)
-    indexes = np.arange(len(prev2011))
+    indexes = np.arange(len(training_sequences))
     np.random.shuffle(indexes)
-    test = df.loc[post2011]
+    test = df.loc[testing_sequences]
     if validation_ratio:
-        validation_indexes = indexes[:int(len(prev2011) * validation_ratio)]
-        train_indexes = indexes[int(len(prev2011) * validation_ratio):]
-        train = df.loc[prev2011[train_indexes]]
-        validation = df.loc[prev2011[validation_indexes]]
+        validation_indexes = indexes[:int(len(training_sequences) * validation_ratio)]
+        train_indexes = indexes[int(len(training_sequences) * validation_ratio):]
+        train = df.loc[training_sequences[train_indexes]]
+        validation = df.loc[training_sequences[validation_indexes]]
         return dict(train=train, validation=validation, test=test)
     else:
-        train_indexes = indexes[int(len(prev2011) * validation_ratio):]
-        train = df.loc[prev2011[train_indexes]]
+        train = df.loc[training_sequences[indexes]]
         return dict(train=train, test=test)
 
 
 class TyphoonSequencesDataset(Dataset):
+    """
+    A pytorch dataset compatible with DataLoader. At each call, return a padded version of the variables, defined by
+    the maximum sequence length.
+    The sequences returned by this class are defined by the argument ''columns'', corresponding to the columns in the
+    given dataframe (Many columns can then be returned as a tuple of sequences).
+    The class can also returns a mask array representing the values that were padded in the original sequence(s).
+    """
     def __init__(self, df, max_length, columns='z_space', column_mask=False):
         if not isinstance(columns, list):
             columns = [columns]

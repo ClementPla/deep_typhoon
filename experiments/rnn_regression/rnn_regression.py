@@ -54,7 +54,7 @@ class RNNRegressionTrainer():
             data = advance_time(data, self.config.experiment.prediction_avance, 'pressure',
                                 self.config.experiment.predict_all_timestep)
 
-        self.datasets = split_dataframe(data, test_set_year=self.config.data.test_split_set,
+        self.datasets = split_dataframe(data, test_years=self.config.data.test_split_set,
                                         validation_ratio=self.config.data.validation_ratio)
 
         col = ['z_space', 'pressure']

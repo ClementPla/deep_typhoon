@@ -48,11 +48,17 @@ def convert_tensor_to_numpy(tensor, squeeze=True):
 def apply_model(arr, model, cuda=None):
     if cuda is None:
         cuda = model.gpu
-
     return convert_tensor_to_numpy(model(convert_numpy_to_tensor(arr, cuda)))
 
 
 def batch_gen(arr, vector=False, batch_size=8):
+    """
+    Cut the input array in batch of the given batch size.
+    :param arr:
+    :param vector:
+    :param batch_size:
+    :return:
+    """
 
     if not vector:
         if arr.ndim in [2, 3]:

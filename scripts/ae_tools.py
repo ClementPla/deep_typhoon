@@ -5,6 +5,17 @@ from threading import Thread
 from os import makedirs, path
 
 def forward(model, input_imgs, b=8, gpu=0, optimize_z=False, **kwargs):
+    """
+    Produces a full forward pass of the model (encoding + decoding).
+    On the intermediate level, a z-space optimization can be done
+    :param model:
+    :param input_imgs: numpy array
+    :param b:
+    :param gpu:
+    :param optimize_z:
+    :param kwargs:
+    :return:
+    """
     gen = batch_gen(input_imgs, batch_size=b)
     output = []
     model.eval()
@@ -21,6 +32,14 @@ def forward(model, input_imgs, b=8, gpu=0, optimize_z=False, **kwargs):
 
 
 def decoding(model, z, b=8, gpu=0):
+    """
+    Decode a latent space variable using the decoder of the given model
+    :param model:
+    :param z:
+    :param b:
+    :param gpu:
+    :return:
+    """
     gen = batch_gen(z, batch_size=b, vector=True)
     output = []
     model.eval()
