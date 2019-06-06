@@ -172,14 +172,18 @@ class LSTMNet(AbstractRNN):
 
         if self.config.experiment.predict_all_timestep:
             inner_state = self.unpad(lstm_out)
-            hx = self.h0_o.repeat(b, 1)
+            if self.learn_hidden_state:
+                hx = self.h0_o.repeat(b, 1)
             max_seqs_size = torch.max(seqs_size)
             output = []
             inner_state = inner_state.permute(1, 0, 2)
             for t in range(max_seqs_size):
                 out = []
                 for t_adv in range(self.config.experiment.prediction_avance+1):
-                    hx = self.output_cell(inner_state[t], hx)
+                    if not self.learn_hidden_state and t == 0 and t_adv == 0:
+                        hx = self.output_cell(inner_state[t])
+                    else:
+                        hx = self.output_cell(inner_state[t], hx)
                     out.append(hx)
                 out = torch.cat(out, -1)
                 out.unsqueeze_(1)
