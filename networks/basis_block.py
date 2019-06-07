@@ -15,10 +15,15 @@ class EncoderBlock(nn.Module):
         elif norm == 'none' or norm is None:
             self.conv = nn.Conv2d(in_channels=channel_in, out_channels=channel_out, kernel_size=5, padding=2, stride=2,
                                   bias=True)
+        elif norm == 'instance':
+            self.conv = nn.Conv2d(in_channels=channel_in, out_channels=channel_out, kernel_size=5, padding=2, stride=2,
+                                  bias=False)
+            self.bn = nn.InstanceNorm2d(channel_out, True)
+
 
     def forward(self, ten, out=False, t=False):
         # here we want to be able to take an intermediate output for reconstruction error
-        if self.norm == 'batch':
+        if self.norm in ['batch', 'instance']:
             if out:
                 ten = self.conv(ten)
                 ten_out = ten
@@ -45,7 +50,7 @@ class DecoderBlock(nn.Module):
         # transpose convolution to double the dimensions
         self.channel_out = channel_out
         self.norm = norm
-        if norm == 'batch':
+        if norm in ['batch', 'instance']:
             if upsampling == 'transposed':
                 self.conv = nn.ConvTranspose2d(channel_in, channel_out, kernel_size=5, padding=2, stride=2,
                                                output_padding=1,
@@ -56,7 +61,10 @@ class DecoderBlock(nn.Module):
                                                      padding=2, stride=1,
                                                      bias=False)
                                            ])
-            self.bn = nn.BatchNorm2d(channel_out, momentum=0.9)
+            if norm == 'batch':
+                self.bn = nn.BatchNorm2d(channel_out, momentum=0.9)
+            elif norm == 'instance':
+                self.bn = nn.InstanceNorm2d(channel_out, True)
         elif norm == 'none' or norm is None:
             if upsampling == 'transposed':
                 self.conv = nn.ConvTranspose2d(channel_in, channel_out, kernel_size=5, padding=2, stride=2,
@@ -70,7 +78,7 @@ class DecoderBlock(nn.Module):
                                            ])
     def forward(self, ten):
         ten = self.conv(ten)
-        if self.norm == 'batch':
+        if self.norm in ['batch', 'instance']:
             ten = self.bn(ten)
         ten = F.relu(ten, True)
         return ten

@@ -6,17 +6,20 @@ import torch
 
 
 class TyphoonEncoder(nn.Module):
-    def __init__(self, channel_in=1, z_size=128, spatial_size = 512, norm='batch'):
+    def __init__(self, channel_in=1, z_size=128, spatial_size=512, norm='batch'):
         super(TyphoonEncoder, self).__init__()
         self.size = channel_in
         layers_list = []
         # the first time 1->32, for every other double the channel size
         if norm == 'batch':
             layers_list += [nn.Conv2d(in_channels=channel_in, out_channels=32, kernel_size=5, padding=2, stride=1,
-                                  bias=False), nn.BatchNorm2d(num_features=32, momentum=0.9), nn.ReLU(True)]
+                                      bias=False), nn.BatchNorm2d(num_features=32, momentum=0.9), nn.ReLU(True)]
         elif norm == 'none' or norm is None:
             layers_list += [nn.Conv2d(in_channels=channel_in, out_channels=32, kernel_size=5, padding=2, stride=1,
                                       bias=True), nn.ReLU(True)]
+        elif norm == 'instance':
+            layers_list += [nn.Conv2d(in_channels=channel_in, out_channels=32, kernel_size=5, padding=2, stride=1,
+                                      bias=False), nn.InstanceNorm2d(32, True), nn.ReLU(True)]
 
         for i in range(4):
             layers_list.append(EncoderBlock(channel_in=32 * (2 ** i), channel_out=32 * 2 ** (i + 1), norm=norm))
@@ -27,9 +30,9 @@ class TyphoonEncoder(nn.Module):
         layers_list.append(EncoderBlock(channel_in=self.size, channel_out=self.size, norm=norm))
 
         self.conv = nn.Sequential(*layers_list)
-        self.spatial_size = int(spatial_size*(2**(-6)))
+        self.spatial_size = int(spatial_size * (2 ** (-6)))
 
-        if norm ==  'batch':
+        if norm == 'batch':
             self.fc = nn.Sequential(nn.Linear(in_features=self.spatial_size * self.spatial_size * self.size,
                                               out_features=1024, bias=False),
                                     nn.BatchNorm1d(num_features=1024, momentum=0.9),
@@ -39,6 +42,13 @@ class TyphoonEncoder(nn.Module):
         elif norm == 'none' or norm is None:
             self.fc = nn.Sequential(nn.Linear(in_features=self.spatial_size * self.spatial_size * self.size,
                                               out_features=1024, bias=True), nn.ReLU(True),
+                                    nn.Linear(in_features=1024, out_features=z_size),
+                                    nn.Tanh())
+        elif norm == 'instance':
+            self.fc = nn.Sequential(nn.Linear(in_features=self.spatial_size * self.spatial_size * self.size,
+                                              out_features=1024, bias=False),
+                                    nn.InstanceNorm1d(1024, True),
+                                    nn.ReLU(True),
                                     nn.Linear(in_features=1024, out_features=z_size),
                                     nn.Tanh())
 
@@ -58,8 +68,9 @@ class TyphoonDecoder(nn.Module):
             self.fc = nn.Sequential(nn.Linear(in_features=z_size, out_features=1024, bias=False),
                                     nn.BatchNorm1d(num_features=1024, momentum=0.9),
                                     nn.ReLU(True),
-                                    nn.Linear(in_features=1024, out_features=spatial_size * spatial_size * size, bias=False),
-                                    nn.BatchNorm1d(num_features=spatial_size * spatial_size* size, momentum=0.9),
+                                    nn.Linear(in_features=1024, out_features=spatial_size * spatial_size * size,
+                                              bias=False),
+                                    nn.BatchNorm1d(num_features=spatial_size * spatial_size * size, momentum=0.9),
                                     nn.ReLU(True)
                                     )
         elif norm == 'none' or norm is None:
@@ -67,14 +78,25 @@ class TyphoonDecoder(nn.Module):
                                     nn.ReLU(True),
                                     nn.Linear(in_features=1024, out_features=spatial_size * spatial_size * size,
                                               bias=True), nn.ReLU(True))
+        elif norm == 'instance':
+            self.fc = nn.Sequential(nn.Linear(in_features=z_size, out_features=1024, bias=False),
+                                    nn.InstanceNorm1d(1024, True),
+                                    nn.ReLU(True),
+                                    nn.Linear(in_features=1024, out_features=spatial_size * spatial_size * size,
+                                              bias=False),
+                                    nn.InstanceNorm1d(spatial_size * spatial_size * size, True),
+                                    nn.ReLU(True)
+                                    )
+
 
         self.multiscale = get_single_levels
         self.layers_list = nn.ModuleList()
         self.layers_list.append(DecoderBlock(channel_in=size, channel_out=size, upsampling=upsampling, norm=norm))
         self.layers_list.append(DecoderBlock(channel_in=size, channel_out=size, upsampling=upsampling, norm=norm))
         for i in range(4):
-            self.layers_list.append(DecoderBlock(channel_in=int(size * 2 ** (-i)), channel_out=int(size * 2 ** (-i - 1)),
-                                            upsampling=upsampling, norm=norm))
+            self.layers_list.append(
+                DecoderBlock(channel_in=int(size * 2 ** (-i)), channel_out=int(size * 2 ** (-i - 1)),
+                             upsampling=upsampling, norm=norm))
 
         self.size = int(size * 2 ** (-i - 1))
         # final conv to get 1 channels and tanh layer
@@ -89,7 +111,7 @@ class TyphoonDecoder(nn.Module):
             self.outputs_convs = nn.ModuleList()
             for i, layer in enumerate(self.layers_list):
                 out = nn.Sequential(nn.Conv2d(in_channels=layer.channel_out, out_channels=1,
-                                                                  kernel_size=5, stride=1, padding=2), nn.Tanh())
+                                              kernel_size=5, stride=1, padding=2), nn.Tanh())
 
                 self.outputs_convs.append(out)
 
@@ -133,7 +155,7 @@ class Discriminator(nn.Module):
         self.size = 512
         self.conv.append(EncoderBlock(channel_in=self.size, channel_out=512, norm=norm))
 
-        spatial_size = int(spatial_size*(2**(-6)))
+        spatial_size = int(spatial_size * (2 ** (-6)))
         # final fc to get the score (real or fake)
         if norm == 'batch':
             self.fc = nn.Sequential(
@@ -145,6 +167,13 @@ class Discriminator(nn.Module):
         elif norm == 'none' or norm is None:
             self.fc = nn.Sequential(
                 nn.Linear(in_features=spatial_size * spatial_size * 512, out_features=512, bias=True),
+                nn.ReLU(inplace=True),
+                nn.Linear(in_features=512, out_features=1),
+            )
+        elif norm == 'instance':
+            self.fc = nn.Sequential(
+                nn.Linear(in_features=spatial_size * spatial_size * 512, out_features=512, bias=False),
+                nn.InstanceNorm1d(512, True),
                 nn.ReLU(inplace=True),
                 nn.Linear(in_features=512, out_features=1),
             )
@@ -180,7 +209,7 @@ class TyphoonAE(AbstractNet):
                  gpu=1,
                  checkpoint='',
                  upsampling='nearest',
-                 spatial_size = 512,
+                 spatial_size=512,
                  gan=False,
                  norm='batch'):
 
@@ -204,7 +233,7 @@ class TyphoonAE(AbstractNet):
                     # init as original implementation
                     scale = 1.0 / numpy.sqrt(numpy.prod(m.weight.shape[1:]))
                     scale /= numpy.sqrt(3)
-                    nn.init.xavier_normal_(m.weight,1)
+                    nn.init.xavier_normal_(m.weight, 1)
                     # nn.init.constant(m.weight,0.005)
                     # nn.init.uniform_(m.weight, -scale, scale)
                 if hasattr(m, "bias") and m.bias is not None and m.bias.requires_grad:
@@ -223,5 +252,3 @@ class TyphoonAE(AbstractNet):
                 return reconstruct[-1]
             else:
                 return reconstruct
-
-
