@@ -22,7 +22,7 @@ class TyphoonEncoder(nn.Module):
         layers_list.append(EncoderBlock(channel_in=self.size, channel_out=self.size))
 
         self.conv = nn.Sequential(*layers_list)
-        self.spatial_size = spatial_size*(2**(-6))
+        self.spatial_size = int(spatial_size*(2**(-6)))
 
         self.fc = nn.Sequential(nn.Linear(in_features=spatial_size * spatial_size * self.size,
                                           out_features=1024, bias=False),
@@ -115,7 +115,7 @@ class Discriminator(nn.Module):
         self.size = 512
         self.conv.append(EncoderBlock(channel_in=self.size, channel_out=512))
 
-        spatial_size = spatial_size*(2**(-6))
+        spatial_size = int(spatial_size*(2**(-6)))
         # final fc to get the score (real or fake)
         self.fc = nn.Sequential(
             nn.Linear(in_features=spatial_size * spatial_size * 512, out_features=512, bias=False),
