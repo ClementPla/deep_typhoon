@@ -171,7 +171,7 @@ class TyphoonAE(AbstractNet):
                     # init as original implementation
                     scale = 1.0 / numpy.sqrt(numpy.prod(m.weight.shape[1:]))
                     scale /= numpy.sqrt(3)
-                    nn.init.xavier_normal(m.weight,1)
+                    nn.init.xavier_normal_(m.weight,1)
                     # nn.init.constant(m.weight,0.005)
                     # nn.init.uniform_(m.weight, -scale, scale)
                 if hasattr(m, "bias") and m.bias is not None and m.bias.requires_grad:
