@@ -212,7 +212,8 @@ class RNNClassifierTrainer():
                     m = input_train[2]
                     l = input_train[3]
                     x = model.imputation(x, m, l)
-
+                if self.config.experiment.predict_all_timestep:
+                    y = y[:, :, -1]
                 if use_uncertain:
                     outs = []
 
@@ -220,6 +221,8 @@ class RNNClassifierTrainer():
                     n_iter = use_uncertain
                     for i in range(n_iter):
                         output = model(x, seqs_size)
+                        if self.config.experiment.predict_all_timestep:
+                            output = output[:,:,-1]
                         size = output.size()
                         outs.append(output)
                     outs = torch.cat(outs).view(n_iter, *size)
@@ -228,6 +231,8 @@ class RNNClassifierTrainer():
 
                 else:
                     output = model(x, seqs_size)
+                    if self.config.experiment.predict_all_timestep:
+                        output = output[:, :, -1]
 
                 mask_seq = torch.flatten(mask_seq).view(-1, 1)
                 masked_output = mask_seq * output.view(-1, output.size()[-1])
