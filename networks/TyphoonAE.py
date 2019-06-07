@@ -23,8 +23,7 @@ class TyphoonEncoder(nn.Module):
 
         self.conv = nn.Sequential(*layers_list)
         self.spatial_size = int(spatial_size*(2**(-6)))
-
-        self.fc = nn.Sequential(nn.Linear(in_features=spatial_size * spatial_size * self.size,
+        self.fc = nn.Sequential(nn.Linear(in_features=self.spatial_size * self.spatial_size * self.size,
                                           out_features=1024, bias=False),
                                 nn.BatchNorm1d(num_features=1024, momentum=0.9),
                                 nn.ReLU(True),
