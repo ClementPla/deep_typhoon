@@ -6,29 +6,41 @@ import torch
 
 
 class TyphoonEncoder(nn.Module):
-    def __init__(self, channel_in=1, z_size=128, spatial_size = 512):
+    def __init__(self, channel_in=1, z_size=128, spatial_size = 512, norm='batch'):
         super(TyphoonEncoder, self).__init__()
         self.size = channel_in
         layers_list = []
         # the first time 1->32, for every other double the channel size
-        layers_list += [nn.Conv2d(in_channels=channel_in, out_channels=32, kernel_size=5, padding=2, stride=1,
-                                  bias=False), nn.BatchNorm2d(num_features=32, momentum=0.9)]
+        if norm == 'batch':
+            layers_list += [nn.Conv2d(in_channels=channel_in, out_channels=32, kernel_size=5, padding=2, stride=1,
+                                  bias=False), nn.BatchNorm2d(num_features=32, momentum=0.9), nn.ReLU(True)]
+        elif norm == 'none' or norm is None:
+            layers_list += [nn.Conv2d(in_channels=channel_in, out_channels=32, kernel_size=5, padding=2, stride=1,
+                                      bias=True), nn.ReLU(True)]
+
         for i in range(4):
-            layers_list.append(EncoderBlock(channel_in=32 * (2 ** i), channel_out=32 * 2 ** (i + 1)))
+            layers_list.append(EncoderBlock(channel_in=32 * (2 ** i), channel_out=32 * 2 ** (i + 1), norm=norm))
 
         self.size = 32 * 2 ** (i + 1)
 
-        layers_list.append(EncoderBlock(channel_in=self.size, channel_out=self.size))
-        layers_list.append(EncoderBlock(channel_in=self.size, channel_out=self.size))
+        layers_list.append(EncoderBlock(channel_in=self.size, channel_out=self.size, norm=norm))
+        layers_list.append(EncoderBlock(channel_in=self.size, channel_out=self.size, norm=norm))
 
         self.conv = nn.Sequential(*layers_list)
         self.spatial_size = int(spatial_size*(2**(-6)))
-        self.fc = nn.Sequential(nn.Linear(in_features=self.spatial_size * self.spatial_size * self.size,
-                                          out_features=1024, bias=False),
-                                nn.BatchNorm1d(num_features=1024, momentum=0.9),
-                                nn.ReLU(True),
-                                nn.Linear(in_features=1024, out_features=z_size),
-                                nn.Tanh())
+
+        if norm ==  'batch':
+            self.fc = nn.Sequential(nn.Linear(in_features=self.spatial_size * self.spatial_size * self.size,
+                                              out_features=1024, bias=False),
+                                    nn.BatchNorm1d(num_features=1024, momentum=0.9),
+                                    nn.ReLU(True),
+                                    nn.Linear(in_features=1024, out_features=z_size),
+                                    nn.Tanh())
+        elif norm == 'none' or norm is None:
+            self.fc = nn.Sequential(nn.Linear(in_features=self.spatial_size * self.spatial_size * self.size,
+                                              out_features=1024, bias=True), nn.ReLU(True),
+                                    nn.Linear(in_features=1024, out_features=z_size),
+                                    nn.Tanh())
 
     def forward(self, ten):
         ten = self.conv(ten)
@@ -38,24 +50,31 @@ class TyphoonEncoder(nn.Module):
 
 
 class TyphoonDecoder(nn.Module):
-    def __init__(self, z_size, size, upsampling='transposed', get_single_levels=False, spatial_size=8):
+    def __init__(self, z_size, size, upsampling='transposed', get_single_levels=False,
+                 spatial_size=8, norm='batch'):
         super(TyphoonDecoder, self).__init__()
         # start from B*z_size
-        self.fc = nn.Sequential(nn.Linear(in_features=z_size, out_features=1024, bias=False),
-                                nn.BatchNorm1d(num_features=1024, momentum=0.9),
-                                nn.ReLU(True),
-                                nn.Linear(in_features=1024, out_features=8 * 8 * size, bias=False),
-                                nn.BatchNorm1d(num_features=8 * 8 * size, momentum=0.9),
-                                nn.ReLU(True)
-                                )
+        if norm == 'batch':
+            self.fc = nn.Sequential(nn.Linear(in_features=z_size, out_features=1024, bias=False),
+                                    nn.BatchNorm1d(num_features=1024, momentum=0.9),
+                                    nn.ReLU(True),
+                                    nn.Linear(in_features=1024, out_features=spatial_size * spatial_size * size, bias=False),
+                                    nn.BatchNorm1d(num_features=spatial_size * spatial_size* size, momentum=0.9),
+                                    nn.ReLU(True)
+                                    )
+        elif norm == 'none' or norm is None:
+            self.fc = nn.Sequential(nn.Linear(in_features=z_size, out_features=1024, bias=True),
+                                    nn.ReLU(True),
+                                    nn.Linear(in_features=1024, out_features=spatial_size * spatial_size * size,
+                                              bias=True), nn.ReLU(True))
 
         self.multiscale = get_single_levels
         self.layers_list = nn.ModuleList()
-        self.layers_list.append(DecoderBlock(channel_in=size, channel_out=size, upsampling=upsampling))
-        self.layers_list.append(DecoderBlock(channel_in=size, channel_out=size, upsampling=upsampling))
+        self.layers_list.append(DecoderBlock(channel_in=size, channel_out=size, upsampling=upsampling, norm=norm))
+        self.layers_list.append(DecoderBlock(channel_in=size, channel_out=size, upsampling=upsampling, norm=norm))
         for i in range(4):
             self.layers_list.append(DecoderBlock(channel_in=int(size * 2 ** (-i)), channel_out=int(size * 2 ** (-i - 1)),
-                                            upsampling=upsampling))
+                                            upsampling=upsampling, norm=norm))
 
         self.size = int(size * 2 ** (-i - 1))
         # final conv to get 1 channels and tanh layer
@@ -92,7 +111,7 @@ class TyphoonDecoder(nn.Module):
 
 
 class Discriminator(nn.Module):
-    def __init__(self, channel_in=1, recon_level=3, spatial_size=512):
+    def __init__(self, channel_in=1, recon_level=3, spatial_size=512, norm='batch'):
         super(Discriminator, self).__init__()
         self.size = channel_in
         self.recon_levl = recon_level
@@ -102,26 +121,34 @@ class Discriminator(nn.Module):
             nn.Conv2d(in_channels=channel_in, out_channels=32, kernel_size=5, stride=1, padding=2),
             nn.ReLU(inplace=True)))
         self.size = 32
-        self.conv.append(EncoderBlock(channel_in=self.size, channel_out=64))
+        self.conv.append(EncoderBlock(channel_in=self.size, channel_out=64, norm=norm))
         self.size = 64
-        self.conv.append(EncoderBlock(channel_in=self.size, channel_out=128))
+        self.conv.append(EncoderBlock(channel_in=self.size, channel_out=128, norm=norm))
         self.size = 128
-        self.conv.append(EncoderBlock(channel_in=self.size, channel_out=256))
+        self.conv.append(EncoderBlock(channel_in=self.size, channel_out=256, norm=norm))
         self.size = 256
-        self.conv.append(EncoderBlock(channel_in=self.size, channel_out=256))
+        self.conv.append(EncoderBlock(channel_in=self.size, channel_out=256, norm=norm))
         self.size = 256
-        self.conv.append(EncoderBlock(channel_in=self.size, channel_out=512))
+        self.conv.append(EncoderBlock(channel_in=self.size, channel_out=512, norm=norm))
         self.size = 512
-        self.conv.append(EncoderBlock(channel_in=self.size, channel_out=512))
+        self.conv.append(EncoderBlock(channel_in=self.size, channel_out=512, norm=norm))
 
         spatial_size = int(spatial_size*(2**(-6)))
         # final fc to get the score (real or fake)
-        self.fc = nn.Sequential(
-            nn.Linear(in_features=spatial_size * spatial_size * 512, out_features=512, bias=False),
-            nn.BatchNorm1d(num_features=512, momentum=0.9),
-            nn.ReLU(inplace=True),
-            nn.Linear(in_features=512, out_features=1),
-        )
+        if norm == 'batch':
+            self.fc = nn.Sequential(
+                nn.Linear(in_features=spatial_size * spatial_size * 512, out_features=512, bias=False),
+                nn.BatchNorm1d(num_features=512, momentum=0.9),
+                nn.ReLU(inplace=True),
+                nn.Linear(in_features=512, out_features=1),
+            )
+        elif norm == 'none' or norm is None:
+            self.fc = nn.Sequential(
+                nn.Linear(in_features=spatial_size * spatial_size * 512, out_features=512, bias=True),
+                nn.ReLU(inplace=True),
+                nn.Linear(in_features=512, out_features=1),
+            )
+
 
     def forward(self, ten, other_ten, mode='REC'):
         if mode == "REC":
@@ -154,17 +181,18 @@ class TyphoonAE(AbstractNet):
                  checkpoint='',
                  upsampling='nearest',
                  spatial_size = 512,
-                 gan=False):
+                 gan=False,
+                 norm='batch'):
 
         super(TyphoonAE, self).__init__(gpu=gpu, checkpoint=checkpoint, upsampling=upsampling)
 
         self.z_size = z_size
-        self.encoder = TyphoonEncoder(z_size=self.z_size, channel_in=channel_in, spatial_size=spatial_size)
+        self.encoder = TyphoonEncoder(z_size=self.z_size, channel_in=channel_in, spatial_size=spatial_size, norm=norm)
         self.decoder = TyphoonDecoder(z_size=self.z_size, size=self.encoder.size, upsampling=upsampling,
-                                      get_single_levels=True, spatial_size=self.encoder.spatial_size)
+                                      get_single_levels=True, spatial_size=self.encoder.spatial_size, norm=norm)
 
         if gan:
-            self.discriminator = Discriminator(channel_in, recon_level=rec_level, spatial_size=spatial_size)
+            self.discriminator = Discriminator(channel_in, recon_level=rec_level, spatial_size=spatial_size, norm=norm)
 
         self.init_parameters()
 

@@ -4,49 +4,74 @@ import torch.nn as nn
 
 # encoder block (used in encoder and discriminator)
 class EncoderBlock(nn.Module):
-    def __init__(self, channel_in, channel_out):
+    def __init__(self, channel_in, channel_out, norm='batch'):
         super(EncoderBlock, self).__init__()
         # convolution to halve the dimensions
-        self.conv = nn.Conv2d(in_channels=channel_in, out_channels=channel_out, kernel_size=5, padding=2, stride=2,
-                              bias=False)
-        self.bn = nn.BatchNorm2d(num_features=channel_out, momentum=0.9)
+        self.norm = norm
+        if norm == 'batch':
+            self.conv = nn.Conv2d(in_channels=channel_in, out_channels=channel_out, kernel_size=5, padding=2, stride=2,
+                                  bias=False)
+            self.bn = nn.BatchNorm2d(num_features=channel_out, momentum=0.9)
+        elif norm == 'none' or norm is None:
+            self.conv = nn.Conv2d(in_channels=channel_in, out_channels=channel_out, kernel_size=5, padding=2, stride=2,
+                                  bias=True)
 
     def forward(self, ten, out=False, t=False):
         # here we want to be able to take an intermediate output for reconstruction error
-        if out:
-            ten = self.conv(ten)
-            ten_out = ten
-            ten = self.bn(ten)
-            ten = F.relu(ten, False)
-            return ten, ten_out
-        else:
-            ten = self.conv(ten)
-            ten = self.bn(ten)
-            ten = F.relu(ten, True)
-            return ten
-
+        if self.norm == 'batch':
+            if out:
+                ten = self.conv(ten)
+                ten_out = ten
+                ten = self.bn(ten)
+                ten = F.relu(ten, True)
+                return ten, ten_out
+            else:
+                ten = self.conv(ten)
+                ten = self.bn(ten)
+                ten = F.relu(ten, True)
+                return ten
+        elif self.norm == 'none' or self.norm is None:
+            if out:
+                ten = self.conv(ten)
+                return F.relu(ten, True), ten
+            else:
+                ten = self.conv(ten)
+                return F.relu(ten, True)
 
 # decoder block (used in the decoder)
 class DecoderBlock(nn.Module):
-    def __init__(self, channel_in, channel_out, upsampling='tranposed'):
+    def __init__(self, channel_in, channel_out, upsampling='tranposed', norm='batch'):
         super(DecoderBlock, self).__init__()
         # transpose convolution to double the dimensions
         self.channel_out = channel_out
-        if upsampling == 'transposed':
-            self.conv = nn.ConvTranspose2d(channel_in, channel_out, kernel_size=5, padding=2, stride=2,
-                                           output_padding=1,
-                                           bias=False)
-        else:
-            self.conv = nn.Sequential(*[nn.Upsample(scale_factor=2, mode=upsampling),
-                                       nn.Conv2d(in_channels=channel_in, out_channels=channel_out, kernel_size=5,
-                                                 padding=2, stride=1,
-                                                 bias=False)
-                                       ])
-        self.bn = nn.BatchNorm2d(channel_out, momentum=0.9)
-
+        self.norm = norm
+        if norm == 'batch':
+            if upsampling == 'transposed':
+                self.conv = nn.ConvTranspose2d(channel_in, channel_out, kernel_size=5, padding=2, stride=2,
+                                               output_padding=1,
+                                               bias=False)
+            else:
+                self.conv = nn.Sequential(*[nn.Upsample(scale_factor=2, mode=upsampling),
+                                           nn.Conv2d(in_channels=channel_in, out_channels=channel_out, kernel_size=5,
+                                                     padding=2, stride=1,
+                                                     bias=False)
+                                           ])
+            self.bn = nn.BatchNorm2d(channel_out, momentum=0.9)
+        elif norm == 'none' or norm is None:
+            if upsampling == 'transposed':
+                self.conv = nn.ConvTranspose2d(channel_in, channel_out, kernel_size=5, padding=2, stride=2,
+                                               output_padding=1,
+                                               bias=True)
+            else:
+                self.conv = nn.Sequential(*[nn.Upsample(scale_factor=2, mode=upsampling),
+                                           nn.Conv2d(in_channels=channel_in, out_channels=channel_out, kernel_size=5,
+                                                     padding=2, stride=1,
+                                                     bias=True)
+                                           ])
     def forward(self, ten):
         ten = self.conv(ten)
-        ten = self.bn(ten)
+        if self.norm == 'batch':
+            ten = self.bn(ten)
         ten = F.relu(ten, True)
         return ten
 
