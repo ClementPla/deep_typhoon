@@ -4,8 +4,9 @@ from .abstract_network import AbstractNet
 from .basis_block import *
 import torch
 
+
 class TyphoonEncoder(nn.Module):
-    def __init__(self, channel_in=1, z_size=128):
+    def __init__(self, channel_in=1, z_size=128, spatial_size = 512):
         super(TyphoonEncoder, self).__init__()
         self.size = channel_in
         layers_list = []
@@ -21,7 +22,10 @@ class TyphoonEncoder(nn.Module):
         layers_list.append(EncoderBlock(channel_in=self.size, channel_out=self.size))
 
         self.conv = nn.Sequential(*layers_list)
-        self.fc = nn.Sequential(nn.Linear(in_features=8 * 8 * self.size, out_features=1024, bias=False),
+        self.spatial_size = spatial_size*(2**(-6))
+
+        self.fc = nn.Sequential(nn.Linear(in_features=spatial_size * spatial_size * self.size,
+                                          out_features=1024, bias=False),
                                 nn.BatchNorm1d(num_features=1024, momentum=0.9),
                                 nn.ReLU(True),
                                 nn.Linear(in_features=1024, out_features=z_size),
@@ -35,11 +39,11 @@ class TyphoonEncoder(nn.Module):
 
 
 class TyphoonDecoder(nn.Module):
-    def __init__(self, z_size, size, upsampling='transposed', get_single_levels=False):
+    def __init__(self, z_size, size, upsampling='transposed', get_single_levels=False, spatial_size=8):
         super(TyphoonDecoder, self).__init__()
         # start from B*z_size
         self.fc = nn.Sequential(nn.Linear(in_features=z_size, out_features=1024, bias=False),
-                                nn.BatchNorm1d(num_features=8 * 8 * size, momentum=0.9),
+                                nn.BatchNorm1d(num_features=spatial_size * spatial_size * size, momentum=0.9),
                                 nn.ReLU(True),
                                 nn.Linear(in_features=1024, out_features=8 * 8 * size, bias=False),
                                 nn.BatchNorm1d(num_features=8 * 8 * size, momentum=0.9),
@@ -89,7 +93,7 @@ class TyphoonDecoder(nn.Module):
 
 
 class Discriminator(nn.Module):
-    def __init__(self, channel_in=1, recon_level=3):
+    def __init__(self, channel_in=1, recon_level=3, spatial_size=512):
         super(Discriminator, self).__init__()
         self.size = channel_in
         self.recon_levl = recon_level
@@ -111,9 +115,10 @@ class Discriminator(nn.Module):
         self.size = 512
         self.conv.append(EncoderBlock(channel_in=self.size, channel_out=512))
 
+        spatial_size = spatial_size*(2**(-6))
         # final fc to get the score (real or fake)
         self.fc = nn.Sequential(
-            nn.Linear(in_features=8 * 8 * 512, out_features=512, bias=False),
+            nn.Linear(in_features=spatial_size * spatial_size * 512, out_features=512, bias=False),
             nn.BatchNorm1d(num_features=512, momentum=0.9),
             nn.ReLU(inplace=True),
             nn.Linear(in_features=512, out_features=1),
@@ -149,17 +154,18 @@ class TyphoonAE(AbstractNet):
                  gpu=1,
                  checkpoint='',
                  upsampling='nearest',
+                 spatial_size = 512,
                  gan=False):
 
         super(TyphoonAE, self).__init__(gpu=gpu, checkpoint=checkpoint, upsampling=upsampling)
 
         self.z_size = z_size
-        self.encoder = TyphoonEncoder(z_size=self.z_size, channel_in=channel_in)
+        self.encoder = TyphoonEncoder(z_size=self.z_size, channel_in=channel_in, spatial_size=spatial_size)
         self.decoder = TyphoonDecoder(z_size=self.z_size, size=self.encoder.size, upsampling=upsampling,
-                                      get_single_levels=True)
+                                      get_single_levels=True, spatial_size=self.encoder.spatial_size)
 
         if gan:
-            self.discriminator = Discriminator(channel_in, recon_level=rec_level)
+            self.discriminator = Discriminator(channel_in, recon_level=rec_level, spatial_size=spatial_size)
 
         self.init_parameters()
 
