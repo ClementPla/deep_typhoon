@@ -47,7 +47,7 @@ class TyphoonEncoder(nn.Module):
         elif norm == 'instance':
             self.fc = nn.Sequential(nn.Linear(in_features=self.spatial_size * self.spatial_size * self.size,
                                               out_features=1024, bias=False),
-                                    nn.InstanceNorm1d(1024, True),
+                                    nn.LayerNorm(1024),
                                     nn.ReLU(True),
                                     nn.Linear(in_features=1024, out_features=z_size),
                                     nn.Tanh())
@@ -80,11 +80,11 @@ class TyphoonDecoder(nn.Module):
                                               bias=True), nn.ReLU(True))
         elif norm == 'instance':
             self.fc = nn.Sequential(nn.Linear(in_features=z_size, out_features=1024, bias=False),
-                                    nn.InstanceNorm1d(1024, True),
+                                    nn.LayerNorm(1024),
                                     nn.ReLU(True),
                                     nn.Linear(in_features=1024, out_features=spatial_size * spatial_size * size,
                                               bias=False),
-                                    nn.InstanceNorm1d(spatial_size * spatial_size * size, True),
+                                    nn.LayerNorm(spatial_size * spatial_size * size),
                                     nn.ReLU(True)
                                     )
 
@@ -173,7 +173,7 @@ class Discriminator(nn.Module):
         elif norm == 'instance':
             self.fc = nn.Sequential(
                 nn.Linear(in_features=spatial_size * spatial_size * 512, out_features=512, bias=False),
-                nn.InstanceNorm1d(512, True),
+                nn.LayerNorm(512, True),
                 nn.ReLU(inplace=True),
                 nn.Linear(in_features=512, out_features=1),
             )
