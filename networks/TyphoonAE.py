@@ -42,7 +42,7 @@ class TyphoonDecoder(nn.Module):
         super(TyphoonDecoder, self).__init__()
         # start from B*z_size
         self.fc = nn.Sequential(nn.Linear(in_features=z_size, out_features=1024, bias=False),
-                                nn.BatchNorm1d(num_features=spatial_size * spatial_size * size, momentum=0.9),
+                                nn.BatchNorm1d(num_features=1024, momentum=0.9),
                                 nn.ReLU(True),
                                 nn.Linear(in_features=1024, out_features=8 * 8 * size, bias=False),
                                 nn.BatchNorm1d(num_features=8 * 8 * size, momentum=0.9),
