@@ -37,7 +37,7 @@ class DecoderBlock(nn.Module):
                                            output_padding=1,
                                            bias=False)
         else:
-            self.conv = nn.Sequential(*[nn.Upsample(scale_factor=2, mode='nearest'),
+            self.conv = nn.Sequential(*[nn.Upsample(scale_factor=2, mode=upsampling),
                                        nn.Conv2d(in_channels=channel_in, out_channels=channel_out, kernel_size=5,
                                                  padding=2, stride=1,
                                                  bias=False)
