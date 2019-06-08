@@ -221,7 +221,7 @@ class TyphoonAE(AbstractNet):
                                       get_single_levels=True, spatial_size=self.encoder.spatial_size, norm=norm)
 
         if gan:
-            self.discriminator = Discriminator(channel_in, recon_level=rec_level, spatial_size=spatial_size, norm=norm)
+            self.discriminator = Discriminator(channel_in, recon_level=rec_level, spatial_size=spatial_size, norm='none')
 
         self.init_parameters()
 
