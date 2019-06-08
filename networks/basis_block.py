@@ -20,6 +20,7 @@ class EncoderBlock(nn.Module):
                                   bias=False)
             self.bn = nn.InstanceNorm2d(channel_out, True)
 
+        self.activation = nn.LeakyReLU(0.2, inplace=True)
 
     def forward(self, ten, out=False, t=False):
         # here we want to be able to take an intermediate output for reconstruction error
@@ -28,20 +29,20 @@ class EncoderBlock(nn.Module):
                 ten = self.conv(ten)
                 ten_out = ten
                 ten = self.bn(ten)
-                ten = F.relu(ten, True)
+                ten = self.activation(ten)
                 return ten, ten_out
             else:
                 ten = self.conv(ten)
                 ten = self.bn(ten)
-                ten = F.relu(ten, True)
+                ten = self.activation(ten)
                 return ten
         elif self.norm == 'none' or self.norm is None:
             if out:
                 ten = self.conv(ten)
-                return F.relu(ten, True), ten
+                return self.activation(ten), ten
             else:
                 ten = self.conv(ten)
-                return F.relu(ten, True)
+                return self.activation(ten)
 
 # decoder block (used in the decoder)
 class DecoderBlock(nn.Module):
@@ -76,11 +77,13 @@ class DecoderBlock(nn.Module):
                                                      padding=2, stride=1,
                                                      bias=True)
                                            ])
+        self.activation = nn.LeakyReLU(0.2, inplace=True)
+
     def forward(self, ten):
         ten = self.conv(ten)
         if self.norm in ['batch', 'instance']:
             ten = self.bn(ten)
-        ten = F.relu(ten, True)
+        ten = self.activation(ten)
         return ten
 
 

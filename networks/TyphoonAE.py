@@ -13,13 +13,14 @@ class TyphoonEncoder(nn.Module):
         # the first time 1->32, for every other double the channel size
         if norm == 'batch':
             layers_list += [nn.Conv2d(in_channels=channel_in, out_channels=32, kernel_size=5, padding=2, stride=1,
-                                      bias=False), nn.BatchNorm2d(num_features=32, momentum=0.9), nn.ReLU(True)]
+                                      bias=False), nn.BatchNorm2d(num_features=32, momentum=0.9),
+                            nn.LeakyReLU(0.2, inplace=True)]
         elif norm == 'none' or norm is None:
             layers_list += [nn.Conv2d(in_channels=channel_in, out_channels=32, kernel_size=5, padding=2, stride=1,
-                                      bias=True), nn.ReLU(True)]
+                                      bias=True), nn.LeakyReLU(0.2, inplace=True)]
         elif norm == 'instance':
             layers_list += [nn.Conv2d(in_channels=channel_in, out_channels=32, kernel_size=5, padding=2, stride=1,
-                                      bias=False), nn.InstanceNorm2d(32, True), nn.ReLU(True)]
+                                      bias=False), nn.InstanceNorm2d(32, True), nn.LeakyReLU(0.2, inplace=True)]
 
         for i in range(4):
             layers_list.append(EncoderBlock(channel_in=32 * (2 ** i), channel_out=32 * 2 ** (i + 1), norm=norm))
@@ -36,19 +37,19 @@ class TyphoonEncoder(nn.Module):
             self.fc = nn.Sequential(nn.Linear(in_features=self.spatial_size * self.spatial_size * self.size,
                                               out_features=1024, bias=False),
                                     nn.BatchNorm1d(num_features=1024, momentum=0.9),
-                                    nn.ReLU(True),
+                                    nn.LeakyReLU(0.2, inplace=True),
                                     nn.Linear(in_features=1024, out_features=z_size),
                                     nn.Tanh())
         elif norm == 'none' or norm is None:
             self.fc = nn.Sequential(nn.Linear(in_features=self.spatial_size * self.spatial_size * self.size,
-                                              out_features=1024, bias=True), nn.ReLU(True),
+                                              out_features=1024, bias=True), nn.LeakyReLU(0.2, inplace=True),
                                     nn.Linear(in_features=1024, out_features=z_size),
                                     nn.Tanh())
         elif norm == 'instance':
             self.fc = nn.Sequential(nn.Linear(in_features=self.spatial_size * self.spatial_size * self.size,
                                               out_features=1024, bias=False),
                                     nn.LayerNorm(1024),
-                                    nn.ReLU(True),
+                                    nn.LeakyReLU(0.2, inplace=True),
                                     nn.Linear(in_features=1024, out_features=z_size),
                                     nn.Tanh())
 
@@ -67,25 +68,25 @@ class TyphoonDecoder(nn.Module):
         if norm == 'batch':
             self.fc = nn.Sequential(nn.Linear(in_features=z_size, out_features=1024, bias=False),
                                     nn.BatchNorm1d(num_features=1024, momentum=0.9),
-                                    nn.ReLU(True),
+                                    nn.LeakyReLU(0.2, inplace=True),
                                     nn.Linear(in_features=1024, out_features=spatial_size * spatial_size * size,
                                               bias=False),
                                     nn.BatchNorm1d(num_features=spatial_size * spatial_size * size, momentum=0.9),
-                                    nn.ReLU(True)
+                                    nn.LeakyReLU(0.2, inplace=True)
                                     )
         elif norm == 'none' or norm is None:
             self.fc = nn.Sequential(nn.Linear(in_features=z_size, out_features=1024, bias=True),
-                                    nn.ReLU(True),
+                                    nn.LeakyReLU(0.2, inplace=True),
                                     nn.Linear(in_features=1024, out_features=spatial_size * spatial_size * size,
-                                              bias=True), nn.ReLU(True))
+                                              bias=True), nn.LeakyReLU(0.2, inplace=True))
         elif norm == 'instance':
             self.fc = nn.Sequential(nn.Linear(in_features=z_size, out_features=1024, bias=False),
                                     nn.LayerNorm(1024),
-                                    nn.ReLU(True),
+                                    nn.LeakyReLU(0.2, inplace=True),
                                     nn.Linear(in_features=1024, out_features=spatial_size * spatial_size * size,
                                               bias=False),
                                     nn.LayerNorm(spatial_size * spatial_size * size),
-                                    nn.ReLU(True)
+                                    nn.LeakyReLU(0.2, inplace=True)
                                     )
 
 
@@ -141,7 +142,7 @@ class Discriminator(nn.Module):
         self.conv = nn.ModuleList()
         self.conv.append(nn.Sequential(
             nn.Conv2d(in_channels=channel_in, out_channels=32, kernel_size=5, stride=1, padding=2),
-            nn.ReLU(inplace=True)))
+            nn.LeakyReLU(0.2, inplace=True)))
         self.size = 32
         self.conv.append(EncoderBlock(channel_in=self.size, channel_out=64, norm=norm))
         self.size = 64
@@ -161,20 +162,20 @@ class Discriminator(nn.Module):
             self.fc = nn.Sequential(
                 nn.Linear(in_features=spatial_size * spatial_size * 512, out_features=512, bias=False),
                 nn.BatchNorm1d(num_features=512, momentum=0.9),
-                nn.ReLU(inplace=True), nn.Dropout(p=0.4),
+                nn.LeakyReLU(0.2, inplace=True), nn.Dropout(p=0.4),
                 nn.Linear(in_features=512, out_features=1),
             )
         elif norm == 'none' or norm is None:
             self.fc = nn.Sequential(
                 nn.Linear(in_features=spatial_size * spatial_size * 512, out_features=512, bias=True),
-                nn.ReLU(inplace=True), nn.Dropout(p=0.4),
+                nn.LeakyReLU(0.2, inplace=True), nn.Dropout(p=0.4),
                 nn.Linear(in_features=512, out_features=1),
             )
         elif norm == 'instance':
             self.fc = nn.Sequential(
                 nn.Linear(in_features=spatial_size * spatial_size * 512, out_features=512, bias=False),
                 nn.LayerNorm(512, True),
-                nn.ReLU(inplace=True), nn.Dropout(p=0.4),
+                nn.LeakyReLU(0.2, inplace=True), nn.Dropout(p=0.4),
                 nn.Linear(in_features=512, out_features=1),
             )
 
