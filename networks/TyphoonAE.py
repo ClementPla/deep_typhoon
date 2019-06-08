@@ -161,20 +161,20 @@ class Discriminator(nn.Module):
             self.fc = nn.Sequential(
                 nn.Linear(in_features=spatial_size * spatial_size * 512, out_features=512, bias=False),
                 nn.BatchNorm1d(num_features=512, momentum=0.9),
-                nn.ReLU(inplace=True),
+                nn.ReLU(inplace=True), nn.Dropout(p=0.4),
                 nn.Linear(in_features=512, out_features=1),
             )
         elif norm == 'none' or norm is None:
             self.fc = nn.Sequential(
                 nn.Linear(in_features=spatial_size * spatial_size * 512, out_features=512, bias=True),
-                nn.ReLU(inplace=True),
+                nn.ReLU(inplace=True), nn.Dropout(p=0.4),
                 nn.Linear(in_features=512, out_features=1),
             )
         elif norm == 'instance':
             self.fc = nn.Sequential(
                 nn.Linear(in_features=spatial_size * spatial_size * 512, out_features=512, bias=False),
                 nn.LayerNorm(512, True),
-                nn.ReLU(inplace=True),
+                nn.ReLU(inplace=True), nn.Dropout(p=0.4),
                 nn.Linear(in_features=512, out_features=1),
             )
 
@@ -188,16 +188,17 @@ class Discriminator(nn.Module):
                     ten, layer_ten = lay(ten, True)
                     # we need the layer representations just for the original and reconstructed,
                     # flatten, because it's a convolutional shape
-                    layer_ten = layer_ten.view(len(layer_ten), -1)
+                    layer_ten = layer_ten.view(2*b, -1)
                     return layer_ten[:b], layer_ten[b:]
                 else:
                     ten = lay(ten)
         else:
+            b = ten.size(0)
             ten = torch.cat((ten, other_ten), 0)
             for i, lay in enumerate(self.conv):
                 ten = lay(ten)
 
-            ten = ten.view(len(ten), -1)
+            ten = ten.view(2*b, -1)
             ten = self.fc(ten)
             return ten
 
