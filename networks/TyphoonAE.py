@@ -199,7 +199,7 @@ class Discriminator(nn.Module):
 
             ten = ten.view(len(ten), -1)
             ten = self.fc(ten)
-            return torch.sigmoid(ten)
+            return ten
 
 
 class TyphoonAE(AbstractNet):
