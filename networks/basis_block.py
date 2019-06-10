@@ -4,7 +4,7 @@ import torch.nn as nn
 
 # encoder block (used in encoder and discriminator)
 class EncoderBlock(nn.Module):
-    def __init__(self, channel_in, channel_out, norm='batch'):
+    def __init__(self, channel_in, channel_out, norm='batch', activation=nn.LeakyReLU(0.2, True)):
         super(EncoderBlock, self).__init__()
         # convolution to halve the dimensions
         self.norm = norm
@@ -20,7 +20,7 @@ class EncoderBlock(nn.Module):
                                   bias=False)
             self.bn = nn.InstanceNorm2d(channel_out, True)
 
-        self.activation = nn.LeakyReLU(0.2, inplace=True)
+        self.activation = activation
 
     def forward(self, ten, out=False, t=False):
         # here we want to be able to take an intermediate output for reconstruction error
@@ -46,7 +46,7 @@ class EncoderBlock(nn.Module):
 
 # decoder block (used in the decoder)
 class DecoderBlock(nn.Module):
-    def __init__(self, channel_in, channel_out, upsampling='tranposed', norm='batch'):
+    def __init__(self, channel_in, channel_out, upsampling='tranposed', norm='batch', activation=nn.LeakyReLU(0.2, True)):
         super(DecoderBlock, self).__init__()
         # transpose convolution to double the dimensions
         self.channel_out = channel_out
@@ -77,7 +77,7 @@ class DecoderBlock(nn.Module):
                                                      padding=2, stride=1,
                                                      bias=True)
                                            ])
-        self.activation = nn.LeakyReLU(0.2, inplace=True)
+        self.activation = activation
 
     def forward(self, ten):
         ten = self.conv(ten)
@@ -88,20 +88,20 @@ class DecoderBlock(nn.Module):
 
 
 class Decoder(nn.Module):
-    def __init__(self, z_size, size, upsampling='transposed', get_single_levels=False):
+    def __init__(self, z_size, size, upsampling='transposed', get_single_levels=False, activation=nn.ReLU(True)):
         super(Decoder, self).__init__()
         # start from B*z_size
         self.fc = nn.Sequential(nn.Linear(in_features=z_size, out_features=8 * 8 * size, bias=False),
                                 nn.BatchNorm1d(num_features=8 * 8 * size, momentum=0.9),
-                                nn.ReLU(True))
+                                activation)
 
         self.get_single_levels = get_single_levels
         layers_list = []
-        layers_list.append(DecoderBlock(channel_in=size, channel_out=size, upsampling=upsampling))
-        layers_list.append(DecoderBlock(channel_in=size, channel_out=size, upsampling=upsampling))
+        layers_list.append(DecoderBlock(channel_in=size, channel_out=size, upsampling=upsampling, activation=activation))
+        layers_list.append(DecoderBlock(channel_in=size, channel_out=size, upsampling=upsampling, activation=activation))
         for i in range(4):
             layers_list.append(DecoderBlock(channel_in=int(size * 2 ** (-i)), channel_out=int(size * 2 ** (-i - 1)),
-                                            upsampling=upsampling))
+                                            upsampling=upsampling, activation=activation))
 
         self.size = int(size * 2 ** (-i - 1))
         # final conv to get 1 channels and tanh layer
