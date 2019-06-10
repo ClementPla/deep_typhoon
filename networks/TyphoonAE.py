@@ -213,7 +213,8 @@ class TyphoonAE(AbstractNet):
                  upsampling='nearest',
                  spatial_size=512,
                  gan=False,
-                 norm='batch'):
+                 norm='batch',
+                 disc_norm ='none'):
 
         super(TyphoonAE, self).__init__(gpu=gpu, checkpoint=checkpoint, upsampling=upsampling)
 
@@ -223,7 +224,7 @@ class TyphoonAE(AbstractNet):
                                       get_single_levels=True, spatial_size=self.encoder.spatial_size, norm=norm)
 
         if gan:
-            self.discriminator = Discriminator(channel_in, recon_level=rec_level, spatial_size=spatial_size, norm='none')
+            self.discriminator = Discriminator(channel_in, recon_level=rec_level, spatial_size=spatial_size, norm=disc_norm)
 
         self.init_parameters()
 
@@ -235,7 +236,7 @@ class TyphoonAE(AbstractNet):
                     # init as original implementation
                     scale = 1.0 / numpy.sqrt(numpy.prod(m.weight.shape[1:]))
                     scale /= numpy.sqrt(3)
-                    nn.init.xavier_normal_(m.weight, 1)
+                    nn.init.xavier_normal_(m.weight, nn.init.calculate_gain('leaky_relu'))
                     # nn.init.constant(m.weight,0.005)
                     # nn.init.uniform_(m.weight, -scale, scale)
                 if hasattr(m, "bias") and m.bias is not None and m.bias.requires_grad:
