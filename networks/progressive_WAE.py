@@ -5,7 +5,7 @@ from .basis_block import *
 
 
 class Encoder(nn.Module):
-    def __init__(self, channel_in=1, z_size=128):
+    def __init__(self, channel_in=1, z_size=128, activation=nn.ReLU(True)):
         super(Encoder, self).__init__()
         self.size = channel_in
         layers_list = []
@@ -13,17 +13,17 @@ class Encoder(nn.Module):
         layers_list += [nn.Conv2d(in_channels=channel_in, out_channels=32, kernel_size=5, padding=2, stride=1,
                                   bias=False), nn.BatchNorm2d(num_features=32, momentum=0.9)]
         for i in range(4):
-            layers_list.append(EncoderBlock(channel_in=32 * (2 ** i), channel_out=32 * 2 ** (i + 1)))
+            layers_list.append(EncoderBlock(channel_in=32 * (2 ** i), channel_out=32 * 2 ** (i + 1), activation=activation))
 
         self.size = 32 * 2 ** (i + 1)
 
-        layers_list.append(EncoderBlock(channel_in=self.size, channel_out=self.size))
-        layers_list.append(EncoderBlock(channel_in=self.size, channel_out=self.size))
+        layers_list.append(EncoderBlock(channel_in=self.size, channel_out=self.size, activation=activation))
+        layers_list.append(EncoderBlock(channel_in=self.size, channel_out=self.size, activation=activation))
 
         self.conv = nn.Sequential(*layers_list)
         self.fc = nn.Sequential(nn.Linear(in_features=8 * 8 * self.size, out_features=1024, bias=False),
                                 nn.BatchNorm1d(num_features=1024, momentum=0.9),
-                                nn.ReLU(True),
+                                activation,
                                 nn.Linear(in_features=1024, out_features=z_size),
                                 nn.Tanh())
 
