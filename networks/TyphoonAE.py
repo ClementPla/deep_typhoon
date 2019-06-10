@@ -180,26 +180,29 @@ class Discriminator(nn.Module):
             )
 
 
-    def forward(self, ten, other_ten, mode='REC'):
+    def forward(self, ten, other_ten=None, mode='REC'):
         if mode == "REC":
             b = ten.size(0)
-            ten = torch.cat((ten, other_ten), 0)
+            if other_ten is not None:
+                ten = torch.cat((ten, other_ten), 0)
+                b = 2*b
             for i, lay in enumerate(self.conv):
                 if i == self.recon_levl:
                     ten, layer_ten = lay(ten, True)
                     # we need the layer representations just for the original and reconstructed,
                     # flatten, because it's a convolutional shape
-                    layer_ten = layer_ten.view(2*b, -1)
-                    return layer_ten[:b], layer_ten[b:]
+                    layer_ten = layer_ten.view(b, -1)
+                    return layer_ten
                 else:
                     ten = lay(ten)
         else:
             b = ten.size(0)
-            ten = torch.cat((ten, other_ten), 0)
+            if other_ten is not None:
+                ten = torch.cat((ten, other_ten), 0)
+                b = 2*b
             for i, lay in enumerate(self.conv):
                 ten = lay(ten)
-
-            ten = ten.view(2*b, -1)
+            ten = ten.view(b, -1)
             ten = self.fc(ten)
             return ten
 
