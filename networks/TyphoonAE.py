@@ -3,7 +3,7 @@ import numpy
 from .abstract_network import AbstractNet
 from .basis_block import *
 import torch
-
+from .mssim import MSSSIM, SSIM
 
 class TyphoonEncoder(nn.Module):
     def __init__(self, channel_in=1, z_size=128, spatial_size=512, norm='batch'):
@@ -88,7 +88,6 @@ class TyphoonDecoder(nn.Module):
                                     nn.LayerNorm(spatial_size * spatial_size * size),
                                     nn.LeakyReLU(0.2, inplace=True)
                                     )
-
 
         self.multiscale = get_single_levels
         self.layers_list = nn.ModuleList()
@@ -179,7 +178,6 @@ class Discriminator(nn.Module):
                 nn.Linear(in_features=512, out_features=1),
             )
 
-
     def forward(self, ten, other_ten=None, mode='REC'):
         if mode == "REC":
             b = ten.size(0)
@@ -217,18 +215,22 @@ class TyphoonAE(AbstractNet):
                  spatial_size=512,
                  gan=False,
                  norm='batch',
-                 disc_norm ='none'):
+                 disc_norm ='none',
+                 multiscale=True,
+                 mssim=False):
 
         super(TyphoonAE, self).__init__(gpu=gpu, checkpoint=checkpoint, upsampling=upsampling)
 
         self.z_size = z_size
         self.encoder = TyphoonEncoder(z_size=self.z_size, channel_in=channel_in, spatial_size=spatial_size, norm=norm)
         self.decoder = TyphoonDecoder(z_size=self.z_size, size=self.encoder.size, upsampling=upsampling,
-                                      get_single_levels=True, spatial_size=self.encoder.spatial_size, norm=norm)
-
+                                      get_single_levels=multiscale, spatial_size=self.encoder.spatial_size, norm=norm)
+        self.multiscale = multiscale
         if gan:
             self.discriminator = Discriminator(channel_in, recon_level=rec_level, spatial_size=spatial_size, norm=disc_norm)
 
+        if mssim:
+            self.mssim = MSSSIM(channel=channel_in)
         self.init_parameters()
 
     def init_parameters(self):
@@ -248,6 +250,7 @@ class TyphoonAE(AbstractNet):
     def forward(self, ten, only_decode=False, only_last_scale=False):
         encoding = self.encoder(ten)
         reconstruct = self.decoder(encoding)
+        only_last_scale *= self.multiscale
         if not only_decode:
             if only_last_scale:
                 return reconstruct[-1], encoding

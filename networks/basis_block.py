@@ -46,7 +46,7 @@ class EncoderBlock(nn.Module):
 
 # decoder block (used in the decoder)
 class DecoderBlock(nn.Module):
-    def __init__(self, channel_in, channel_out, upsampling='tranposed', norm='batch', activation=nn.LeakyReLU(0.2, True)):
+    def __init__(self, channel_in, channel_out, upsampling='transposed', norm='batch', activation=nn.LeakyReLU(0.2, True)):
         super(DecoderBlock, self).__init__()
         # transpose convolution to double the dimensions
         self.channel_out = channel_out
