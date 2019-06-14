@@ -77,8 +77,8 @@ def split_dataframe(df, test_years=2011, validation_ratio=0.2, seed=1234):
         training_sequences = np.unique([_ for _ in sequences if int(_[:4]) <= test_years])
         testing_sequences = np.unique([_ for _ in sequences if int(_[:4]) > test_years])
     elif isinstance(test_years, list):
-        testing_sequences = [_ for _ in sequences if int(_[:4]) in test_years]
-        training_sequences = [_ for _ in sequences if _ not in testing_sequences]
+        testing_sequences = np.unique([_ for _ in sequences if int(_[:4]) in test_years])
+        training_sequences = np.unique([_ for _ in sequences if _ not in testing_sequences])
     else:
         raise ValueError("Expected either a list or a year for testing sequences, got ", test_years)
     np.random.seed(seed)
