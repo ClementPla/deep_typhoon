@@ -20,14 +20,15 @@ from os import path
 
 
 class RNNRegressionTrainer():
-    def __init__(self, config, s_print=None, initialize=True):
+    def __init__(self, config, s_print=None, initialize=True, initialize_model=True):
         self.config = config
         self.s_print = s_print
 
         self.set_seed()
         if initialize:
             self.set_data()
-            self.set_model()
+            if initialize_model:
+                self.set_model()
 
     def set_seed(self):
         seed = self.config.experiment.seed
