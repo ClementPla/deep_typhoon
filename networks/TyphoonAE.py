@@ -64,7 +64,9 @@ class TyphoonDecoder(nn.Module):
     def __init__(self, z_size, size, upsampling='transposed', get_single_levels=False,
                  spatial_size=8, norm='batch'):
         super(TyphoonDecoder, self).__init__()
+        self.spatial_size = spatial_size
         # start from B*z_size
+
         if norm == 'batch':
             self.fc = nn.Sequential(nn.Linear(in_features=z_size, out_features=1024, bias=False),
                                     nn.BatchNorm1d(num_features=1024, momentum=0.9),
@@ -117,7 +119,7 @@ class TyphoonDecoder(nn.Module):
 
     def forward(self, ten, only_last=False):
         ten = self.fc(ten)
-        ten = ten.view(len(ten), -1, 8, 8)
+        ten = ten.view(len(ten), -1, self.spatial_size, self.spatial_size)
         if not self.multiscale:
             ten = self.conv(ten)
             return ten
