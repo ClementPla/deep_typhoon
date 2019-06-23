@@ -143,6 +143,7 @@ class RNNRegressionTrainer():
                                 "Validation: loss %f" % (validation_loss))
 
                         validation_criteria = validation_loss
+                        lr_decayer.step(validation_loss)
 
                         if e == 0:
                             min_criteria_validation = validation_criteria
@@ -153,8 +154,7 @@ class RNNRegressionTrainer():
                                                       use_datetime=self.config.training.save_in_timestamp_folder)
 
             p_epoch.succeed()
-            if e:
-                lr_decayer.step(validation_loss)
+
 
     def _print(self, *a, **b):
         if self.s_print is None:

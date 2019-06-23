@@ -139,6 +139,7 @@ class RNNClassifierTrainer():
                         full_pred, full_gt, validation_loss = self.test(self.model, valid_loader)
                         conf = ConfMatrix.confusion_matrix(full_gt, full_pred)
 
+
                         recall = conf.recall()
                         precision = conf.precision()
                         accuracy = conf.accuracy()
@@ -157,7 +158,7 @@ class RNNClassifierTrainer():
                                                                                                        f1))
                             if e % self.config.training.html_disp == 0:
                                 display.display(conf)
-
+                        lr_decayer.step(validation_loss)
                         if self.config.training.save_on_validation.lower() == 'loss':
                             validation_criteria = validation_loss
                         elif self.config.training.save_on_validation.lower() == 'accuracy':
@@ -181,7 +182,7 @@ class RNNClassifierTrainer():
                                                       use_datetime=self.config.training.save_in_timestamp_folder)
 
             p_epoch.succeed()
-            lr_decayer.step(validation_loss)
+
 
     def _print(self, *a, **b):
         if self.s_print is None:
