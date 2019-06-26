@@ -89,7 +89,7 @@ class RNNRegressionTrainer():
                                weight_decay=self.config.hp.weight_decay)
 
         lr_decayer = ReduceLROnPlateau(optimizer, factor=self.config.hp.decay_lr, verbose=self.config.training.verbose,
-                                       patience=self.config.training.lr_patience_decay)
+                                       patience=self.config.training.lr_patience_decay, min_lr=self.config.hp.minimal_lr)
 
         MSEloss = nn.L1Loss()
 

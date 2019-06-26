@@ -95,7 +95,7 @@ class RNNClassifierTrainer():
                                eps=1e-08)
 
         lr_decayer = ReduceLROnPlateau(optimizer, factor=self.config.hp.decay_lr, verbose=self.config.training.verbose,
-                                       patience=self.config.training.lr_patience_decay)
+                                       patience=self.config.training.lr_patience_decay, min_lr=self.config.hp.minimal_lr)
 
         CEloss = nn.CrossEntropyLoss(torch.from_numpy(self.class_weighting).cuda(self.config.experiment.gpu))
 
