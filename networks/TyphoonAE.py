@@ -6,7 +6,7 @@ import torch
 from .mssim import MSSSIM, SSIM
 
 class TyphoonEncoder(nn.Module):
-    def __init__(self, channel_in=1, z_size=128, spatial_size=512, norm='batch'):
+    def __init__(self, channel_in=1, z_size=128, spatial_size=512, norm='batch', pooling_step=4):
         super(TyphoonEncoder, self).__init__()
         self.size = channel_in
         layers_list = []
@@ -22,16 +22,16 @@ class TyphoonEncoder(nn.Module):
             layers_list += [nn.Conv2d(in_channels=channel_in, out_channels=32, kernel_size=5, padding=2, stride=1,
                                       bias=False), nn.InstanceNorm2d(32, True), nn.LeakyReLU(0.2, inplace=True)]
 
-        for i in range(4):
+        for i in range(pooling_step):
             layers_list.append(EncoderBlock(channel_in=32 * (2 ** i), channel_out=32 * 2 ** (i + 1), norm=norm))
 
         self.size = 32 * 2 ** (i + 1)
 
-        layers_list.append(EncoderBlock(channel_in=self.size, channel_out=self.size, norm=norm))
-        layers_list.append(EncoderBlock(channel_in=self.size, channel_out=self.size, norm=norm))
+        # layers_list.append(EncoderBlock(channel_in=self.size, channel_out=self.size, norm=norm))
+        # layers_list.append(EncoderBlock(channel_in=self.size, channel_out=self.size, norm=norm))
 
         self.conv = nn.Sequential(*layers_list)
-        self.spatial_size = int(spatial_size * (2 ** (-6)))
+        self.spatial_size = int(spatial_size * (2 ** (-pooling_step)))
 
         if norm == 'batch':
             self.fc = nn.Sequential(nn.Linear(in_features=self.spatial_size * self.spatial_size * self.size,
@@ -61,7 +61,9 @@ class TyphoonEncoder(nn.Module):
 
 
 class TyphoonDecoder(nn.Module):
-    def __init__(self, z_size, size, upsampling='transposed', get_single_levels=False,
+    def __init__(self, z_size, size,
+                 pooling_step=4,
+                 upsampling='transposed', get_single_levels=False,
                  spatial_size=8, norm='batch'):
         super(TyphoonDecoder, self).__init__()
         self.spatial_size = spatial_size
@@ -93,9 +95,8 @@ class TyphoonDecoder(nn.Module):
 
         self.multiscale = get_single_levels
         self.layers_list = nn.ModuleList()
-        self.layers_list.append(DecoderBlock(channel_in=size, channel_out=size, upsampling=upsampling, norm=norm))
-        self.layers_list.append(DecoderBlock(channel_in=size, channel_out=size, upsampling=upsampling, norm=norm))
-        for i in range(4):
+        
+        for i in range(pooling_step):
             self.layers_list.append(
                 DecoderBlock(channel_in=int(size * 2 ** (-i)), channel_out=int(size * 2 ** (-i - 1)),
                              upsampling=upsampling, norm=norm))
@@ -212,6 +213,7 @@ class TyphoonAE(AbstractNet):
                  z_size=128,
                  rec_level=3,
                  gpu=1,
+                 pooling_step=4,
                  checkpoint='',
                  upsampling='nearest',
                  spatial_size=512,
@@ -224,8 +226,10 @@ class TyphoonAE(AbstractNet):
         super(TyphoonAE, self).__init__(gpu=gpu, checkpoint=checkpoint, upsampling=upsampling)
 
         self.z_size = z_size
-        self.encoder = TyphoonEncoder(z_size=self.z_size, channel_in=channel_in, spatial_size=spatial_size, norm=norm)
+        self.encoder = TyphoonEncoder(z_size=self.z_size, channel_in=channel_in, spatial_size=spatial_size, norm=norm,
+                                      pooling_step=pooling_step)
         self.decoder = TyphoonDecoder(z_size=self.z_size, size=self.encoder.size, upsampling=upsampling,
+                                      pooling_step=pooling_step,
                                       get_single_levels=multiscale, spatial_size=self.encoder.spatial_size, norm=norm)
         self.multiscale = multiscale
         if gan:
